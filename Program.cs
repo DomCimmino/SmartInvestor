@@ -1,3 +1,19 @@
-﻿// See https://aka.ms/new-console-template for more information
+﻿using Microsoft.Extensions.DependencyInjection;
 
-Console.WriteLine("Hello, World!");
+namespace SmartInvestor;
+
+internal static class Program
+{
+    private static void Main(string[] args)
+    {
+        ConfigureServices().BuildServiceProvider().GetService<Application>()?.Init();
+    }
+
+    private static ServiceCollection ConfigureServices()
+    {
+        var services = new ServiceCollection();
+        services
+            .AddSingleton<Application, Application>();
+        return services;
+    }
+}
