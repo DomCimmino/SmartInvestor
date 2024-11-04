@@ -1,6 +1,8 @@
+using SmartInvestor.Models;
+
 namespace SmartInvestor.Services.Interfaces;
 
 public interface IEdgarService
 {
-    Task<string> GetCompanyFacts(string cik);
+    Task<CompanyFacts?> GetCompanyFacts(string cik);
 }
