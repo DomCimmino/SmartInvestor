@@ -4,20 +4,19 @@ namespace SmartInvestor.Models;
 
 public class Facts
 {
-    [JsonProperty("dei")] public DocumentAndEntityInformation? DocumentAndEntityInformation { get; set; } 
-    // TO-DO 
-    // Property in FinancialReportingTaxonomy
-   // [JsonProperty("us-gaap")] public FinancialReportingTaxonomy? FinancialReportingTaxonomy { get; set; }
+    [JsonProperty("dei")] public DocumentAndEntityInformation? DocumentAndEntityInformation { get; set; }
+    [JsonProperty("us-gaap")] public FinancialReportingTaxonomy? FinancialReportingTaxonomy { get; set; }
 }
 
 public class DocumentAndEntityInformation
 {
-    [JsonProperty("EntityPublicFloat")] public BasicFact? EntityPublicFloat { get; set; }
+    [JsonProperty(nameof(EntityPublicFloat))] public BasicFact? EntityPublicFloat { get; set; }
 }
 
 public class FinancialReportingTaxonomy
 {
-    
+    [JsonProperty(nameof(Liabilities))] public BasicFact? Liabilities { get; set; }
+    [JsonProperty(nameof(Assets))] public BasicFact? Assets { get; set; }
 }
 
 public class BasicFact

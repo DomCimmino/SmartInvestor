@@ -7,7 +7,7 @@ public class Application(IEdgarService edgarService)
 {
     public async Task Init()
     {
-        var runningPath = System.AppDomain.CurrentDomain.BaseDirectory;
+        var runningPath = AppDomain.CurrentDomain.BaseDirectory;
         var filePath = $"{Path.GetFullPath(Path.Combine(runningPath, @"..\..\..\"))}Resources\\constituents.csv";
         var companies = CsvParser.GetCompanies(filePath);
         var companyFact =
