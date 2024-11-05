@@ -17,6 +17,9 @@ public class FinancialReportingTaxonomy
 {
     [JsonProperty(nameof(Liabilities))] public BasicFact? Liabilities { get; set; }
     [JsonProperty(nameof(Assets))] public BasicFact? Assets { get; set; }
+    [JsonProperty("AssetsCurrent")] public BasicFact? CurrentAssets { get; set; }
+    [JsonProperty("EarningsPerShareBasic")] public BasicFact? EarningsPerShare { get; set; }
+    [JsonProperty(nameof(CommonStockSharesOutstanding))] public BasicFact? CommonStockSharesOutstanding { get; set; }
 }
 
 public class BasicFact

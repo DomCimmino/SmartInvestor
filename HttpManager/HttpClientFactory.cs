@@ -5,25 +5,21 @@ namespace SmartInvestor.HttpManager;
 
 public class HttpClientFactory : IHttpClientFactory
 {
-    private readonly object _lock = new();
-    private HttpClient? _httpClient;
-
     public HttpClient GetHttpClient()
     {
-        lock (_lock)
+        var httpClient = new HttpClient
         {
-            if (_httpClient != null) return _httpClient;
-            _httpClient = new HttpClient
-            {
-                DefaultRequestVersion = HttpVersion.Version20,
-                BaseAddress = new Uri("https://data.sec.gov/")
-            };
-            _httpClient.DefaultRequestHeaders.Add("User-Agent", "client application");
-            _httpClient.DefaultRequestHeaders.Accept.Clear();
-            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            _httpClient.DefaultRequestHeaders.AcceptLanguage.Clear();
-            _httpClient.DefaultRequestHeaders.AcceptLanguage.Add(new StringWithQualityHeaderValue("it-IT"));
-            return _httpClient;
-        }
+            DefaultRequestVersion = HttpVersion.Version20,
+            BaseAddress = new Uri("https://www.sec.gov/"),
+            Timeout = TimeSpan.FromMinutes(30)
+        };
+        httpClient.DefaultRequestHeaders.Add("User-Agent", "client application");
+        httpClient.DefaultRequestHeaders.Accept.Clear();
+        httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        httpClient.DefaultRequestHeaders.AcceptEncoding.Clear();
+        httpClient.DefaultRequestHeaders.AcceptEncoding.Add(new StringWithQualityHeaderValue("gzip"));
+        httpClient.DefaultRequestHeaders.AcceptLanguage.Clear();
+        httpClient.DefaultRequestHeaders.AcceptLanguage.Add(new StringWithQualityHeaderValue("it-IT"));
+        return httpClient;
     }
 }

@@ -8,10 +8,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Folder Include="Resources\" />
+      <Folder Include="Resources\ExtractedData\" />
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="AutoMapper" Version="13.0.1" />
       <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     </ItemGroup>

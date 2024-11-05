@@ -1,13 +1,15 @@
+using Newtonsoft.Json;
+
 namespace SmartInvestor.Models;
 
 public class Company
 {
-    public string? Symbol { get; set; }
-    public string? Name { get; set; }
-    public string? GicsSector { get; set; }
-    public string? GicsSubIndustry { get; set; }
-    public string? HeadquartersLocation { get; set; }
-    public DateTime? AddedDateInSp500 { get; set; }
-    public string? Cik { get; set; }
-    public string? FoundedYear { get; set; }
+    public string? Cik { get; init; }
+    public string? Name { get; init; }
+    public string? Ticker { get; init; }
+}
+
+public class CompanyData
+{
+    [JsonProperty("data")] public List<List<object>>? Data { get; set; }
 }

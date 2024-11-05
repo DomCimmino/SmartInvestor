@@ -1,17 +1,45 @@
-using SmartInvestor.Helpers;
+using SmartInvestor.Models;
 using SmartInvestor.Services.Interfaces;
 
 namespace SmartInvestor;
 
 public class Application(IEdgarService edgarService)
 {
+    private Dictionary<Company, CompanyFacts> _data = new();
+
     public async Task Init()
     {
-        var runningPath = AppDomain.CurrentDomain.BaseDirectory;
-        var filePath = $"{Path.GetFullPath(Path.Combine(runningPath, @"..\..\..\"))}Resources\\constituents.csv";
-        var companies = CsvParser.GetCompanies(filePath);
-        var companyFact =
-            await edgarService.GetCompanyFacts(companies.FirstOrDefault(c => c.Name?.StartsWith('M') == true)?.Cik ??
-                                               string.Empty);
+        await edgarService.DownloadCompaniesFacts();
+        await LoadCompaniesAndCompaniesFacts();
+    }
+
+    private async Task LoadCompaniesAndCompaniesFacts()
+    {
+        var companies = await edgarService.GetCompanies();
+
+        const int maxDegreeOfParallelism = 50;
+
+        await Parallel.ForEachAsync(companies, new ParallelOptions { MaxDegreeOfParallelism = maxDegreeOfParallelism },
+            async (company, token) =>
+            {
+                var companyFact = await edgarService.GetCompanyFacts(company.Cik ?? string.Empty);
+                if (companyFact is
+                    {
+                        Facts.FinancialReportingTaxonomy:
+                        {
+                            Assets: not null,
+                            Liabilities: not null,
+                            CurrentAssets: not null,
+                            EarningsPerShare: not null,
+                            CommonStockSharesOutstanding: not null
+                        }
+                    })
+                {
+                    lock (_data)
+                    {
+                        _data.Add(company, companyFact);
+                    }
+                }
+            });
     }
 }
