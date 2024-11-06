@@ -21,13 +21,14 @@ internal static class Program
         var services = new ServiceCollection();
         var config = new MapperConfiguration(cfg =>
         {
-            cfg.AddProfile<MappingProfile>();
+            cfg.AddProfile<MappingProfiles>();
         });
         var mapper = config.CreateMapper();
         services
             .AddSingleton<Application, Application>()
             .AddSingleton(mapper)
             .AddSingleton<IHttpClientFactory, HttpClientFactory>()
+            .AddSingleton<ISqLiteService, SqLiteService>()
             .AddSingleton<IEdgarService, EdgarService>();
         return services;
     }

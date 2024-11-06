@@ -1,49 +1,48 @@
-using System.Net;
-using SmartInvestor.Models;
+using SmartInvestor.Models.DTOs;
 using SmartInvestor.Services.Interfaces;
+using IMapper = AutoMapper.IMapper;
 
 namespace SmartInvestor;
 
-public class Application(IEdgarService edgarService)
+public class Application(ISqLiteService sqLiteService, IEdgarService edgarService, IMapper mapper)
 {
-    private Dictionary<string, CompanyFacts> _data = new();
-
     public async Task Init()
     {
+        await sqLiteService.InitDatabase();
         await edgarService.DownloadCompaniesFacts();
-        await LoadCompaniesAndCompaniesFacts();
+        await UploadCompaniesIntoSqlite();
     }
 
-    private async Task LoadCompaniesAndCompaniesFacts()
+    private async Task UploadCompaniesIntoSqlite()
     {
         var companies = await edgarService.GetCompanies();
-
-        const int maxDegreeOfParallelism = 50;
-
-        await Parallel.ForEachAsync(companies, new ParallelOptions { MaxDegreeOfParallelism = maxDegreeOfParallelism },
-            async (company, _) =>
-            {
-                if (!_data.ContainsKey(company.Cik ?? string.Empty))
+        var companiesDto = new List<CompanyDto>();
+        foreach (var company in companies)
+        {
+            if (await sqLiteService.IsCompanyUploaded(company.Cik ?? string.Empty)) continue;
+            var companyFact = await edgarService.GetCompanyFacts(company.Cik ?? string.Empty);
+            if (companyFact is
                 {
-                    var companyFact = await edgarService.GetCompanyFacts(company.Cik ?? string.Empty);
-                    if (companyFact is
-                        {
-                            Facts.FinancialReportingTaxonomy:
-                            {
-                                Assets: not null,
-                                Liabilities: not null,
-                                CurrentAssets: not null,
-                                EarningsPerShare: not null,
-                                CommonStockSharesOutstanding: not null
-                            }
-                        })
+                    Cik: not null,
+                    EntityName: not null,
+                    Facts:
                     {
-                        lock (_data)
+                        DocumentAndEntityInformation.EntityPublicFloat: not null,
+                        FinancialReportingTaxonomy:
                         {
-                            _data.Add(company.Cik ?? string.Empty, companyFact);
+                            Assets: not null,
+                            Liabilities: not null,
+                            CurrentAssets: not null,
+                            EarningsPerShare: not null,
+                            CommonStockSharesOutstanding: not null
                         }
                     }
-                }
-            });
+                })
+            {
+                companiesDto.Add(mapper.Map<CompanyDto>(companyFact));
+            }
+        }
+
+        await sqLiteService.InsertCompanies(companiesDto);
     }
 }
