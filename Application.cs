@@ -17,31 +17,42 @@ public class Application(ISqLiteService sqLiteService, IEdgarService edgarServic
     {
         var companies = await edgarService.GetCompanies();
         var companiesDto = new List<CompanyDto>();
-        foreach (var company in companies)
+        var semaphore = new SemaphoreSlim(30);
+        
+        var tasks = companies.Select(async company =>
         {
-            if (await sqLiteService.IsCompanyUploaded(company.Cik ?? string.Empty)) continue;
-            var companyFact = await edgarService.GetCompanyFacts(company.Cik ?? string.Empty);
-            if (companyFact is
-                {
-                    Cik: not null,
-                    EntityName: not null,
-                    Facts:
-                    {
-                        DocumentAndEntityInformation.EntityPublicFloat: not null,
-                        FinancialReportingTaxonomy:
-                        {
-                            Assets: not null,
-                            Liabilities: not null,
-                            CurrentAssets: not null,
-                            EarningsPerShare: not null,
-                            CommonStockSharesOutstanding: not null
-                        }
-                    }
-                })
+            await semaphore.WaitAsync();
+            try
             {
-                companiesDto.Add(mapper.Map<CompanyDto>(companyFact));
+                if (await sqLiteService.IsCompanyUploaded(company.Cik ?? string.Empty)) return;
+                var companyFact = await edgarService.GetCompanyFacts(company.Cik ?? string.Empty);
+                if (companyFact is
+                    {
+                        Cik: not null,
+                        EntityName: not null,
+                        Facts:
+                        {
+                            DocumentAndEntityInformation.EntityPublicFloat: not null,
+                            FinancialReportingTaxonomy:
+                            {
+                                Assets: not null,
+                                Liabilities: not null,
+                                CurrentAssets: not null,
+                                EarningsPerShare: not null,
+                                CommonStockSharesOutstanding: not null
+                            }
+                        }
+                    })
+                {
+                    companiesDto.Add(mapper.Map<CompanyDto>(companyFact));
+                }
             }
-        }
+            finally
+            {
+                semaphore.Release();
+            }
+        });
+        await Task.WhenAll(tasks);
 
         await sqLiteService.InsertCompanies(companiesDto);
     }
