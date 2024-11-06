@@ -5,7 +5,7 @@ namespace SmartInvestor;
 
 public class Application(IEdgarService edgarService)
 {
-    private Dictionary<Company, CompanyFacts> _data = new();
+    private Dictionary<string, CompanyFacts> _data = new();
 
     public async Task Init()
     {
@@ -20,7 +20,7 @@ public class Application(IEdgarService edgarService)
         const int maxDegreeOfParallelism = 50;
 
         await Parallel.ForEachAsync(companies, new ParallelOptions { MaxDegreeOfParallelism = maxDegreeOfParallelism },
-            async (company, token) =>
+            async (company, _) =>
             {
                 var companyFact = await edgarService.GetCompanyFacts(company.Cik ?? string.Empty);
                 if (companyFact is
@@ -37,7 +37,7 @@ public class Application(IEdgarService edgarService)
                 {
                     lock (_data)
                     {
-                        _data.Add(company, companyFact);
+                        _data.Add(company.Cik ?? string.Empty, companyFact);
                     }
                 }
             });
