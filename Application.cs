@@ -1,3 +1,4 @@
+using System.Net;
 using SmartInvestor.Models;
 using SmartInvestor.Services.Interfaces;
 
@@ -22,22 +23,25 @@ public class Application(IEdgarService edgarService)
         await Parallel.ForEachAsync(companies, new ParallelOptions { MaxDegreeOfParallelism = maxDegreeOfParallelism },
             async (company, _) =>
             {
-                var companyFact = await edgarService.GetCompanyFacts(company.Cik ?? string.Empty);
-                if (companyFact is
-                    {
-                        Facts.FinancialReportingTaxonomy:
-                        {
-                            Assets: not null,
-                            Liabilities: not null,
-                            CurrentAssets: not null,
-                            EarningsPerShare: not null,
-                            CommonStockSharesOutstanding: not null
-                        }
-                    })
+                if (!_data.ContainsKey(company.Cik ?? string.Empty))
                 {
-                    lock (_data)
+                    var companyFact = await edgarService.GetCompanyFacts(company.Cik ?? string.Empty);
+                    if (companyFact is
+                        {
+                            Facts.FinancialReportingTaxonomy:
+                            {
+                                Assets: not null,
+                                Liabilities: not null,
+                                CurrentAssets: not null,
+                                EarningsPerShare: not null,
+                                CommonStockSharesOutstanding: not null
+                            }
+                        })
                     {
-                        _data.Add(company.Cik ?? string.Empty, companyFact);
+                        lock (_data)
+                        {
+                            _data.Add(company.Cik ?? string.Empty, companyFact);
+                        }
                     }
                 }
             });
