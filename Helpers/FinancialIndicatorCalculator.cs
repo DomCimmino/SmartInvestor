@@ -36,6 +36,9 @@ public static class FinancialIndicatorCalculator
                 }
                 if (count <= 0) prices[symbol] = null;
                 prices[symbol] =  sum / count;
+                
+                sum = 0;
+                count = 0;
             }
 
             return prices;
