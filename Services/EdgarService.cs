@@ -9,8 +9,8 @@ namespace SmartInvestor.Services;
 
 public class EdgarService(IHttpClientFactory clientFactory, IMapper mapper) : IEdgarService
 {
-    private Dictionary<string, string>? _fileCache;
     private string? _extractDataDirectory;
+    private Dictionary<string, string>? _fileCache;
 
     public async Task<List<Company>> GetCompanies()
     {

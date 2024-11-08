@@ -1,5 +1,4 @@
 using SmartInvestor.Models.DTOs;
-using SQLite;
 
 namespace SmartInvestor.Services.Interfaces;
 

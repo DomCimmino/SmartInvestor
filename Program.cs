@@ -12,17 +12,14 @@ internal static class Program
     private static async Task Main(string[] args)
     {
         var application = ConfigureServices().BuildServiceProvider().GetService<Application>();
-        if(application == null) return;
+        if (application == null) return;
         await application.Init();
     }
 
     private static ServiceCollection ConfigureServices()
     {
         var services = new ServiceCollection();
-        var config = new MapperConfiguration(cfg =>
-        {
-            cfg.AddProfile<MappingProfiles>();
-        });
+        var config = new MapperConfiguration(cfg => { cfg.AddProfile<MappingProfiles>(); });
         var mapper = config.CreateMapper();
         services
             .AddSingleton<Application, Application>()

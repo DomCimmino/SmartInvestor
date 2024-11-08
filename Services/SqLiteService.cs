@@ -6,8 +6,6 @@ namespace SmartInvestor.Services;
 
 public class SqLiteService : ISqLiteService
 {
-    private SQLiteAsyncConnection? _database;
-
     private const SQLiteOpenFlags Flags =
         SQLiteOpenFlags.Create |
         SQLiteOpenFlags.ReadWrite |
@@ -16,20 +14,17 @@ public class SqLiteService : ISqLiteService
     private static readonly string DatabasePath =
         Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\Resources", "smart_investor.db3");
 
+    private SQLiteAsyncConnection? _database;
+
     public async Task InitDatabase()
     {
-        if (_database is not null)
-        {
-            return;
-        }
+        if (_database is not null) return;
 
         _database = new SQLiteAsyncConnection(DatabasePath, Flags);
         try
         {
             if (_database.TableMappings.All(x => x.MappedType.Name != nameof(CompanyDto)))
-            {
                 await _database.CreateTableAsync(typeof(CompanyDto)).ConfigureAwait(false);
-            }
         }
         catch (Exception e)
         {

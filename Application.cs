@@ -19,32 +19,19 @@ public class Application(ISqLiteService sqLiteService, IEdgarService edgarServic
     {
         var companies = await edgarService.GetCompanies();
         var companiesDto = new List<CompanyDto>();
-        var semaphore = new SemaphoreSlim(30);
 
-        var tasks = companies.Select(async company =>
+        foreach (var company in companies)
         {
-            await semaphore.WaitAsync();
-            try
-            {
-                if (await sqLiteService.IsCompanyUploaded(company.Cik ?? string.Empty)) return;
-                var companyFact = await edgarService.GetCompanyFacts(company.Cik ?? string.Empty);
-                if (companyFact?.HasAllNonNullProperties() == true)
-                {
-                    companiesDto.Add(MapCompanyFactIntoCompanyDto(companyFact));
-                    //companiesDto.Add(mapper.Map<CompanyDto>(companyFact));
-                }
-            }
-            finally
-            {
-                semaphore.Release();
-            }
-        });
-        await Task.WhenAll(tasks);
+            if (await sqLiteService.IsCompanyUploaded(company.Cik ?? string.Empty)) return;
+            var companyFact = await edgarService.GetCompanyFacts(company.Cik ?? string.Empty);
+            if (companyFact?.HasAllNonNullProperties() == true)
+                companiesDto.Add(MapCompanyFactIntoCompanyDto(companyFact, company.Ticker ?? string.Empty)); 
+        }
 
         await sqLiteService.InsertCompanies(companiesDto);
     }
 
-    private CompanyDto MapCompanyFactIntoCompanyDto(CompanyFacts facts)
+    private CompanyDto MapCompanyFactIntoCompanyDto(CompanyFacts facts, string companySymbol)
     {
         var marketCap = facts.Facts?.DocumentAndEntityInformation?.EntityPublicFloat?.Unit?.Usd
             ?.FirstOrDefault(x => x is { FiscalYear: 2019, Form: "10-K" })?.Value;
@@ -52,7 +39,7 @@ public class Application(ISqLiteService sqLiteService, IEdgarService edgarServic
         var outstandingShares = facts.Facts?.FinancialReportingTaxonomy?.CommonStockSharesOutstanding?.Unit?.Shares
             ?.FirstOrDefault(x => x is { FiscalYear: 2019, Form: "10-K" })?.Value;
 
-        var pricePerShare = (double?)(marketCap / outstandingShares);
+        var pricePerShare = FinancialIndicatorCalculator.PricePerShare(companySymbol);
 
         var earningsPerShareValues = facts.Facts?.FinancialReportingTaxonomy?.EarningsPerShare?.Unit?.UsdAndShares
             ?.Where(x => x is { Form: "10-K", FiscalYear: 2019 or 2018 or 2017, Value: not null })
@@ -61,7 +48,7 @@ public class Application(ISqLiteService sqLiteService, IEdgarService edgarServic
 
         var assets = facts.Facts?.FinancialReportingTaxonomy?.Assets?.Unit?.Usd
             ?.FirstOrDefault(x => x is { FiscalYear: 2019, Form: "10-K" })?.Value;
-        
+
         var currentAssets = facts.Facts?.FinancialReportingTaxonomy?.CurrentAssets?.Unit?.Usd
             ?.FirstOrDefault(x => x is { FiscalYear: 2019, Form: "10-K" })?.Value;
 
@@ -72,11 +59,13 @@ public class Application(ISqLiteService sqLiteService, IEdgarService edgarServic
         {
             Cik = facts.Cik,
             Name = facts.EntityName,
+            Ticker = companySymbol,
             MarketCap = marketCap,
             CurrentRatio = FinancialIndicatorCalculator.CurrentRatio(currentAssets ?? -1, currentLiabilities ?? -1),
             PriceEarningsRatio =
                 FinancialIndicatorCalculator.PriceEarningsRatio(pricePerShare ?? -1, earningsPerShareValues ?? []),
-            PriceBookValue = FinancialIndicatorCalculator.PriceBookValue(pricePerShare ?? -1, assets ?? -1, currentLiabilities ?? -1, outstandingShares ?? -1)
+            PriceBookValue = FinancialIndicatorCalculator.PriceBookValue(pricePerShare ?? -1, assets ?? -1,
+                currentLiabilities ?? -1, outstandingShares ?? -1)
         };
 
         return companyDto;

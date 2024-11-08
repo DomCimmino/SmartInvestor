@@ -1,5 +1,4 @@
 using AutoMapper;
-using SmartInvestor.Helpers;
 using SmartInvestor.Models;
 using SmartInvestor.Models.DTOs;
 

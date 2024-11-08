@@ -8,10 +8,12 @@ public class Unit
     [JsonProperty("USD")] public List<BasicUnit>? Usd { get; set; }
     [JsonProperty("USD/shares")] public List<BasicUnit>? UsdAndShares { get; set; }
 
-    public bool HasAllNonNullProperties() =>
-        Shares != null && Shares.All(u => u.HasAllNonNullProperties()) ||
-        Usd != null && Usd.All(u => u.HasAllNonNullProperties()) ||
-        UsdAndShares != null && UsdAndShares.All(u => u.HasAllNonNullProperties());
+    public bool HasAllNonNullProperties()
+    {
+        return (Shares != null && Shares.All(u => u.HasAllNonNullProperties())) ||
+               (Usd != null && Usd.All(u => u.HasAllNonNullProperties())) ||
+               (UsdAndShares != null && UsdAndShares.All(u => u.HasAllNonNullProperties()));
+    }
 }
 
 public class BasicUnit
@@ -26,8 +28,10 @@ public class BasicUnit
     [JsonProperty("filed")] public DateTime? FilingDate { get; set; }
     [JsonProperty("frame")] public string? CalendarYear { get; set; }
 
-    public bool HasAllNonNullProperties() =>
-        FiscalYear != null &&
-        Value != null &&
-        Form != null;
+    public bool HasAllNonNullProperties()
+    {
+        return FiscalYear != null &&
+               Value != null &&
+               Form != null;
+    }
 }
