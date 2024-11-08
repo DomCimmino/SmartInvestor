@@ -18,28 +18,31 @@ public class Application(ISqLiteService sqLiteService, IEdgarService edgarServic
     private async Task UploadCompaniesIntoSqlite()
     {
         var companies = await edgarService.GetCompanies();
+        var symbols = companies.Select(c => c.Ticker).Where(ticker => !string.IsNullOrEmpty(ticker)).ToList();
+        var pricesPerShare = FinancialIndicatorCalculator.GetPricesPerShareBatch(symbols);
         var companiesDto = new List<CompanyDto>();
 
-        foreach (var company in companies)
+        await Parallel.ForEachAsync(companies, async (company, _) =>
         {
             if (await sqLiteService.IsCompanyUploaded(company.Cik ?? string.Empty)) return;
             var companyFact = await edgarService.GetCompanyFacts(company.Cik ?? string.Empty);
             if (companyFact?.HasAllNonNullProperties() == true)
-                companiesDto.Add(MapCompanyFactIntoCompanyDto(companyFact, company.Ticker ?? string.Empty)); 
-        }
+            {
+                var pricePerShare = pricesPerShare.GetValueOrDefault(company.Ticker);
+                companiesDto.Add(MapCompanyFactIntoCompanyDto(companyFact, company.Ticker ?? string.Empty, pricePerShare));
+            } 
+        });
 
         await sqLiteService.InsertCompanies(companiesDto);
     }
 
-    private CompanyDto MapCompanyFactIntoCompanyDto(CompanyFacts facts, string companySymbol)
+    private CompanyDto MapCompanyFactIntoCompanyDto(CompanyFacts facts, string companySymbol, double? pricePerShare)
     {
         var marketCap = facts.Facts?.DocumentAndEntityInformation?.EntityPublicFloat?.Unit?.Usd
             ?.FirstOrDefault(x => x is { FiscalYear: 2019, Form: "10-K" })?.Value;
 
         var outstandingShares = facts.Facts?.FinancialReportingTaxonomy?.CommonStockSharesOutstanding?.Unit?.Shares
             ?.FirstOrDefault(x => x is { FiscalYear: 2019, Form: "10-K" })?.Value;
-
-        var pricePerShare = FinancialIndicatorCalculator.PricePerShare(companySymbol);
 
         var earningsPerShareValues = facts.Facts?.FinancialReportingTaxonomy?.EarningsPerShare?.Unit?.UsdAndShares
             ?.Where(x => x is { Form: "10-K", FiscalYear: 2019 or 2018 or 2017, Value: not null })
