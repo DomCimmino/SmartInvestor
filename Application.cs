@@ -1,3 +1,5 @@
+using SmartInvestor.Helpers;
+using SmartInvestor.Models;
 using SmartInvestor.Models.DTOs;
 using SmartInvestor.Services.Interfaces;
 using IMapper = AutoMapper.IMapper;
@@ -18,7 +20,7 @@ public class Application(ISqLiteService sqLiteService, IEdgarService edgarServic
         var companies = await edgarService.GetCompanies();
         var companiesDto = new List<CompanyDto>();
         var semaphore = new SemaphoreSlim(30);
-        
+
         var tasks = companies.Select(async company =>
         {
             await semaphore.WaitAsync();
@@ -26,25 +28,10 @@ public class Application(ISqLiteService sqLiteService, IEdgarService edgarServic
             {
                 if (await sqLiteService.IsCompanyUploaded(company.Cik ?? string.Empty)) return;
                 var companyFact = await edgarService.GetCompanyFacts(company.Cik ?? string.Empty);
-                if (companyFact is
-                    {
-                        Cik: not null,
-                        EntityName: not null,
-                        Facts:
-                        {
-                            DocumentAndEntityInformation.EntityPublicFloat: not null,
-                            FinancialReportingTaxonomy:
-                            {
-                                Assets: not null,
-                                Liabilities: not null,
-                                CurrentAssets: not null,
-                                EarningsPerShare: not null,
-                                CommonStockSharesOutstanding: not null
-                            }
-                        }
-                    })
+                if (companyFact?.HasAllNonNullProperties() == true)
                 {
-                    companiesDto.Add(mapper.Map<CompanyDto>(companyFact));
+                    companiesDto.Add(MapCompanyFactIntoCompanyDto(companyFact));
+                    //companiesDto.Add(mapper.Map<CompanyDto>(companyFact));
                 }
             }
             finally
@@ -55,5 +42,43 @@ public class Application(ISqLiteService sqLiteService, IEdgarService edgarServic
         await Task.WhenAll(tasks);
 
         await sqLiteService.InsertCompanies(companiesDto);
+    }
+
+    private CompanyDto MapCompanyFactIntoCompanyDto(CompanyFacts facts)
+    {
+        var marketCap = facts.Facts?.DocumentAndEntityInformation?.EntityPublicFloat?.Unit?.Usd
+            ?.FirstOrDefault(x => x is { FiscalYear: 2019, Form: "10-K" })?.Value;
+
+        var outstandingShares = facts.Facts?.FinancialReportingTaxonomy?.CommonStockSharesOutstanding?.Unit?.Shares
+            ?.FirstOrDefault(x => x is { FiscalYear: 2019, Form: "10-K" })?.Value;
+
+        var pricePerShare = (double?)(marketCap / outstandingShares);
+
+        var earningsPerShareValues = facts.Facts?.FinancialReportingTaxonomy?.EarningsPerShare?.Unit?.UsdAndShares
+            ?.Where(x => x is { Form: "10-K", FiscalYear: 2019 or 2018 or 2017, Value: not null })
+            .Select(x => (double?)x.Value)
+            .ToList();
+
+        var assets = facts.Facts?.FinancialReportingTaxonomy?.Assets?.Unit?.Usd
+            ?.FirstOrDefault(x => x is { FiscalYear: 2019, Form: "10-K" })?.Value;
+        
+        var currentAssets = facts.Facts?.FinancialReportingTaxonomy?.CurrentAssets?.Unit?.Usd
+            ?.FirstOrDefault(x => x is { FiscalYear: 2019, Form: "10-K" })?.Value;
+
+        var currentLiabilities = facts.Facts?.FinancialReportingTaxonomy?.Liabilities?.Unit?.Usd
+            ?.FirstOrDefault(x => x is { FiscalYear: 2019, Form: "10-K" })?.Value;
+
+        var companyDto = new CompanyDto
+        {
+            Cik = facts.Cik,
+            Name = facts.EntityName,
+            MarketCap = marketCap,
+            CurrentRatio = FinancialIndicatorCalculator.CurrentRatio(currentAssets ?? -1, currentLiabilities ?? -1),
+            PriceEarningsRatio =
+                FinancialIndicatorCalculator.PriceEarningsRatio(pricePerShare ?? -1, earningsPerShareValues ?? []),
+            PriceBookValue = FinancialIndicatorCalculator.PriceBookValue(pricePerShare ?? -1, assets ?? -1, currentLiabilities ?? -1, outstandingShares ?? -1)
+        };
+
+        return companyDto;
     }
 }

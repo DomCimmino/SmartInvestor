@@ -7,12 +7,12 @@ public static class FinancialIndicatorCalculator
         return currentAssets / currentLiabilities;
     }
 
-    public static double PriceEarningsRatio(double pricePerShare, List<double> earningsPerShare)
+    public static double? PriceEarningsRatio(double pricePerShare, List<double?> earningsPerShare)
     {
-        return pricePerShare / (earningsPerShare.Sum() / earningsPerShare.Count);
+        return pricePerShare / earningsPerShare.Average();
     }
 
-    public static double PriceBookValue(double pricePerShare, double totalAssets, double totalLiabilities,
+    public static double PriceBookValue(double pricePerShare, long totalAssets, long totalLiabilities,
         double numberOfOutstandingShares)
     {
         return pricePerShare / ((totalAssets - totalLiabilities) / numberOfOutstandingShares);
