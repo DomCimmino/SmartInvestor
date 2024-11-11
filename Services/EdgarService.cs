@@ -16,6 +16,8 @@ public class EdgarService(IHttpClientFactory clientFactory, IMapper mapper) : IE
     {
         try
         {
+            if (_fileCache == null) InitializeFileCache();
+
             var response = await clientFactory.GetHttpClient().GetAsync("files/company_tickers_exchange.json")
                 .ConfigureAwait(false);
             if (response is { IsSuccessStatusCode: false, Content: null }) return [];
@@ -23,9 +25,10 @@ public class EdgarService(IHttpClientFactory clientFactory, IMapper mapper) : IE
             var contentString = await ReadResponseContentAsync(response).ConfigureAwait(false);
             if (string.IsNullOrEmpty(contentString)) return [];
 
-            var companyData = JsonConvert.DeserializeObject<CompanyData>(contentString);
-            return companyData?.Data?
-                .Where(item => item.Count >= 4)
+            var companies = JsonConvert.DeserializeObject<CompanyData>(contentString);
+            return companies?.Data?
+                .Where(item =>
+                    item.Count >= 4 && (bool)_fileCache?.ContainsKey($"{item[0]}".PadLeft(10, '0').Insert(0, "CIK")))
                 .Select(mapper.Map<Company>)
                 .ToList() ?? [];
         }

@@ -1,12 +1,15 @@
 using Newtonsoft.Json;
+using SQLite;
 
 namespace SmartInvestor.Models;
 
 public class Company
 {
-    public string? Cik { get; init; }
-    public string? Name { get; init; }
-    public string? Ticker { get; init; }
+    [PrimaryKey] public string? Cik { get; init; }
+    [NotNull] public string? Name { get; init; }
+    [NotNull] public string? Ticker { get; init; }
+    [Ignore] public CompanyFacts? CompanyHistoryData { get; set; }
+    [NotNull] public string? JsonCompanyHistoryData { get; set; }
 }
 
 public class CompanyData

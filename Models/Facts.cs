@@ -37,12 +37,16 @@ public class FinancialReportingTaxonomy
     [JsonProperty(nameof(CommonStockSharesOutstanding))]
     public BasicFact? CommonStockSharesOutstanding { get; set; }
 
+    [JsonProperty("PaymentsOfDividends")]
+    public BasicFact? PaidDividends { get; set; }
+    
     public bool HasAllNonNullProperties()
     {
         return Liabilities?.HasAllNonNullProperties() == true &&
                Assets?.HasAllNonNullProperties() == true &&
                CurrentAssets?.HasAllNonNullProperties() == true &&
                EarningsPerShare?.HasAllNonNullProperties() == true &&
+               PaidDividends?.HasAllNonNullProperties() == true &&
                CommonStockSharesOutstanding?.HasAllNonNullProperties() == true;
     }
 }

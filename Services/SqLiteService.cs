@@ -1,3 +1,4 @@
+using SmartInvestor.Models;
 using SmartInvestor.Models.DTOs;
 using SmartInvestor.Services.Interfaces;
 using SQLite;
@@ -23,8 +24,12 @@ public class SqLiteService : ISqLiteService
         _database = new SQLiteAsyncConnection(DatabasePath, Flags);
         try
         {
-            if (_database.TableMappings.All(x => x.MappedType.Name != nameof(CompanyDto)))
+            if (_database.TableMappings.All(x => x.MappedType.Name != nameof(CompanyDto)) &&
+                _database.TableMappings.All(x => x.MappedType.Name != nameof(Company)))
+            {
                 await _database.CreateTableAsync(typeof(CompanyDto)).ConfigureAwait(false);
+                await _database.CreateTableAsync(typeof(Company)).ConfigureAwait(false);
+            }
         }
         catch (Exception e)
         {
@@ -33,14 +38,41 @@ public class SqLiteService : ISqLiteService
         }
     }
 
-    public async Task<bool> InsertCompanies(List<CompanyDto> companyDto)
+    public async Task<List<Company>> GetCompanies()
     {
-        await _database.DeleteAllAsync<CompanyDto>();
-        return await _database.InsertAsync(companyDto) == companyDto.Count;
+        if (_database is null) return [];
+        return await _database.Table<Company>().ToListAsync();
     }
-
+    
+    public async Task<bool> HasCompanies()
+    {
+        if (_database is null) return false;
+        return await _database.Table<Company>().CountAsync() > 0;
+    }
+    
+    public async Task<bool> HasCompanyDtos()
+    {
+        if (_database is null) return false;
+        return await _database.Table<CompanyDto>().CountAsync() > 0;
+    }
+    
+    public async Task<bool> InsertCompanies(List<Company> companies)
+    {
+        if (_database is null) return false;
+        await _database.DeleteAllAsync<Company>();
+        return await _database.InsertAsync(companies) == companies.Count;
+    }
+    
+    public async Task<bool> InsertCompanyDtos(List<CompanyDto> companyDtos)
+    {
+        if (_database is null) return false;
+        await _database.DeleteAllAsync<CompanyDto>();
+        return await _database.InsertAsync(companyDtos) == companyDtos.Count;
+    }
+    
     public async Task<bool> IsCompanyUploaded(string cik)
     {
-        return await _database.FindAsync<CompanyDto>(cik) != null;
+        if (_database is null) return false;
+        return await _database.FindAsync<Company>(cik) != null;
     }
 }
