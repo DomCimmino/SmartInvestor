@@ -54,28 +54,19 @@ public class Application(ISqLiteService sqLiteService, IEdgarService edgarServic
             var financialReportingTaxonomy = company.CompanyHistoryData?.Facts?.FinancialReportingTaxonomy;
 
             var marketCap = FinancialIndicatorCalculator.GetValueForYearAndForm(
-                documentAndEntityInformation?.EntityPublicFloat ?? new BasicFact(),
-                Constants.ReferenceYear, Constants.ReferenceForm);
+                documentAndEntityInformation?.EntityPublicFloat ?? new BasicFact());
 
             var outstandingShares = FinancialIndicatorCalculator.GetValueForYearAndForm(
-                financialReportingTaxonomy?.CommonStockSharesOutstanding ?? new BasicFact(),
-                Constants.ReferenceYear, Constants.ReferenceForm);
+                financialReportingTaxonomy?.CommonStockSharesOutstanding ?? new BasicFact());
 
             var assets = FinancialIndicatorCalculator.GetValueForYearAndForm(
-                financialReportingTaxonomy?.Assets ?? new BasicFact(),
-                Constants.ReferenceYear, Constants.ReferenceForm);
+                financialReportingTaxonomy?.Assets ?? new BasicFact());
 
             var currentAssets = FinancialIndicatorCalculator.GetValueForYearAndForm(
-                financialReportingTaxonomy?.CurrentAssets ?? new BasicFact(),
-                Constants.ReferenceYear, Constants.ReferenceForm);
+                financialReportingTaxonomy?.CurrentAssets ?? new BasicFact());
 
             var currentLiabilities = FinancialIndicatorCalculator.GetValueForYearAndForm(
-                financialReportingTaxonomy?.Liabilities ?? new BasicFact(),
-                Constants.ReferenceYear, Constants.ReferenceForm);
-
-            var dividendGrowthYears =
-                FinancialIndicatorCalculator.GetGrowthYears(
-                    financialReportingTaxonomy?.PaidDividends ?? new BasicFact(), Constants.ReferenceForm);
+                financialReportingTaxonomy?.Liabilities ?? new BasicFact());
 
             var pricePerShare = pricesPerShare.GetValueOrDefault(company.Ticker ?? string.Empty);
 
@@ -96,7 +87,9 @@ public class Application(ISqLiteService sqLiteService, IEdgarService edgarServic
                     FinancialIndicatorCalculator.PriceEarningsRatio(pricePerShare, earningsPerShareValues ?? []),
                 PriceBookValue = FinancialIndicatorCalculator.PriceBookValue(pricePerShare, assets,
                     currentLiabilities, outstandingShares),
-                DividendsGrowthYears = dividendGrowthYears
+                DividendsGrowthYears = FinancialIndicatorCalculator.GetGrowthYears(
+                    financialReportingTaxonomy?.PaidDividends ?? new BasicFact()),
+                EarningsGrowthPercentage = FinancialIndicatorCalculator.GetEarningsGrowthPercentage(financialReportingTaxonomy?.EarningsPerShare ?? new BasicFact())
             });
         }
 

@@ -11,7 +11,7 @@ public class CompanyDto
     [NotNull] public double? CurrentRatio { get; init; }
     [NotNull] public double? PriceBookValue { get; init; }
     [NotNull] public double? PriceEarningsRatio { get; init; }
-    [NotNull] public int? EarningsGrowthYears { get; init; }
+    [NotNull] public int? EarningsGrowthPercentage { get; init; }
     [NotNull] public int? DividendsGrowthYears { get; init; }
     [NotNull] public int? EarningsPerShareGrowthYears { get; init; }
 }

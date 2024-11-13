@@ -5,24 +5,24 @@ namespace SmartInvestor.Helpers;
 
 public static class FinancialIndicatorCalculator
 {
-    public static double GetValueForYearAndForm(BasicFact basicFact, int year, string form)
+    public static double GetValueForYearAndForm(BasicFact basicFact)
     {
         var units = CheckBasicFacts(basicFact);
 
         if (units.Count == 0) return -1;
 
         var matchingUnit = units?
-            .FirstOrDefault(x => x.FiscalYear == year && x.Form == form);
+            .FirstOrDefault(x => x is { FiscalYear: Constants.ReferenceYear, Form: Constants.ReferenceForm });
 
         return matchingUnit?.Value ?? -1;
     }
 
-    public static int GetGrowthYears(BasicFact basicFact, string form)
+    public static int GetGrowthYears(BasicFact basicFact)
     {
         var units = CheckBasicFacts(basicFact);
         if (units.Count == 0) return 0;
 
-        var groupedByFiscalYear = units.Where(u => u.Form == form && u.FiscalYear < Constants.ReferenceYear)
+        var groupedByFiscalYear = units.Where(u => u is { Form: Constants.ReferenceForm, FiscalYear: < Constants.ReferenceYear })
             .GroupBy(u => u.FiscalYear ?? -1).ToDictionary(
                 g => g.Key,
                 g => g.Sum(u => u.Value ?? 0)
@@ -36,6 +36,25 @@ public static class FinancialIndicatorCalculator
                 < 0 => -1
             })
             .Sum();
+    }
+
+    public static int GetEarningsGrowthPercentage(BasicFact basicFact)
+    {
+        var units = CheckBasicFacts(basicFact);
+        if (units.Count == 0) return 0;
+        
+        var orderedValues = units.Where(u => u is { Form: Constants.ReferenceForm, FiscalYear: < Constants.ReferenceYear })
+            .GroupBy(u => u.FiscalYear ?? -1).ToDictionary(
+                g => g.Key,
+                g => g.Sum(u => u.Value ?? 0)
+            )
+            .OrderBy(kvp => kvp.Key)
+            .Select(kvp => kvp.Value)
+            .ToList();
+        
+        if (orderedValues.Count < 2) return 0;
+        
+        return orderedValues.First() != 0 ? (int)((orderedValues.Last() - orderedValues.First()) / Math.Abs((double)orderedValues.First())) * 100 : 0;
     }
 
     public static double CurrentRatio(double currentAssets, double currentLiabilities)
