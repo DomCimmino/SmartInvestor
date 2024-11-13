@@ -9,7 +9,7 @@ public interface ISqLiteService
     Task<List<Company>> GetCompanies();
     Task<bool> HasCompanies();
     Task<bool> HasCompanyDtos();
-    Task<bool> InsertCompanies(List<Company> companies);
-    Task<bool> InsertCompanyDtos(List<CompanyDto> companyDtos);
+    Task InsertCompanies(List<Company> companies);
+    Task InsertCompanyDtos(List<CompanyDto> companyDtos);
     Task<bool> IsCompanyUploaded(string cik);
 }

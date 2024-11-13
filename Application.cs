@@ -45,11 +45,11 @@ public class Application(ISqLiteService sqLiteService, IEdgarService edgarServic
         {
             var marketCap = company.CompanyHistoryData?.Facts?.DocumentAndEntityInformation?.EntityPublicFloat?.Unit
                 ?.Usd
-                ?.FirstOrDefault(x => x is { FiscalYear: 2019, Form: "10-K" })?.Value;
+                ?.FirstOrDefault(x => x is { FiscalYear: 2019, Form: "10-K" })?.Value ?? -1;
 
             var outstandingShares = company.CompanyHistoryData?.Facts?.FinancialReportingTaxonomy
                 ?.CommonStockSharesOutstanding?.Unit?.Shares
-                ?.FirstOrDefault(x => x is { FiscalYear: 2019, Form: "10-K" })?.Value;
+                ?.FirstOrDefault(x => x is { FiscalYear: 2019, Form: "10-K" })?.Value ?? -1;
 
             var pricePerShare = pricesPerShare.GetValueOrDefault(company.Ticker ?? string.Empty);
 
@@ -60,14 +60,14 @@ public class Application(ISqLiteService sqLiteService, IEdgarService edgarServic
                 .ToList();
 
             var assets = company.CompanyHistoryData?.Facts?.FinancialReportingTaxonomy?.Assets?.Unit?.Usd
-                ?.FirstOrDefault(x => x is { FiscalYear: 2019, Form: "10-K" })?.Value;
+                ?.FirstOrDefault(x => x is { FiscalYear: 2019, Form: "10-K" })?.Value ?? -1;
 
             var currentAssets = company.CompanyHistoryData?.Facts?.FinancialReportingTaxonomy?.CurrentAssets?.Unit?.Usd
-                ?.FirstOrDefault(x => x is { FiscalYear: 2019, Form: "10-K" })?.Value;
+                ?.FirstOrDefault(x => x is { FiscalYear: 2019, Form: "10-K" })?.Value ?? -1;
 
             var currentLiabilities = company.CompanyHistoryData?.Facts?.FinancialReportingTaxonomy?.Liabilities?.Unit
                 ?.Usd
-                ?.FirstOrDefault(x => x is { FiscalYear: 2019, Form: "10-K" })?.Value;
+                ?.FirstOrDefault(x => x is { FiscalYear: 2019, Form: "10-K" })?.Value ?? -1;
 
             companyDtos.Add(new CompanyDto
             {
@@ -75,11 +75,11 @@ public class Application(ISqLiteService sqLiteService, IEdgarService edgarServic
                 Name = company.Name,
                 Ticker = company.Ticker,
                 MarketCap = marketCap,
-                CurrentRatio = FinancialIndicatorCalculator.CurrentRatio(currentAssets ?? -1, currentLiabilities ?? -1),
+                CurrentRatio = FinancialIndicatorCalculator.CurrentRatio(currentAssets, currentLiabilities),
                 PriceEarningsRatio =
-                    FinancialIndicatorCalculator.PriceEarningsRatio(pricePerShare ?? -1, earningsPerShareValues ?? []),
-                PriceBookValue = FinancialIndicatorCalculator.PriceBookValue(pricePerShare ?? -1, assets ?? -1,
-                    currentLiabilities ?? -1, outstandingShares ?? -1)
+                    FinancialIndicatorCalculator.PriceEarningsRatio(pricePerShare, earningsPerShareValues ?? []),
+                PriceBookValue = FinancialIndicatorCalculator.PriceBookValue(pricePerShare, assets,
+                    currentLiabilities, outstandingShares)
             });
         }
 

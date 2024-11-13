@@ -43,33 +43,33 @@ public class SqLiteService : ISqLiteService
         if (_database is null) return [];
         return await _database.Table<Company>().ToListAsync();
     }
-    
+
     public async Task<bool> HasCompanies()
     {
         if (_database is null) return false;
         return await _database.Table<Company>().CountAsync() > 0;
     }
-    
+
     public async Task<bool> HasCompanyDtos()
     {
         if (_database is null) return false;
         return await _database.Table<CompanyDto>().CountAsync() > 0;
     }
-    
-    public async Task<bool> InsertCompanies(List<Company> companies)
+
+    public async Task InsertCompanies(List<Company> companies)
     {
-        if (_database is null) return false;
+        if (_database is null) return;
         await _database.DeleteAllAsync<Company>();
-        return await _database.InsertAsync(companies) == companies.Count;
+        await _database.InsertAllAsync(companies);
     }
-    
-    public async Task<bool> InsertCompanyDtos(List<CompanyDto> companyDtos)
+
+    public async Task InsertCompanyDtos(List<CompanyDto> companyDtos)
     {
-        if (_database is null) return false;
+        if (_database is null) return;
         await _database.DeleteAllAsync<CompanyDto>();
-        return await _database.InsertAsync(companyDtos) == companyDtos.Count;
+        await _database.InsertAllAsync(companyDtos);
     }
-    
+
     public async Task<bool> IsCompanyUploaded(string cik)
     {
         if (_database is null) return false;

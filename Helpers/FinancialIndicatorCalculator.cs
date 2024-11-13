@@ -9,9 +9,9 @@ public static class FinancialIndicatorCalculator
         return currentAssets / currentLiabilities;
     }
 
-    public static Dictionary<string, double?> GetPricesPerShareBatch(List<string?> symbols)
+    public static Dictionary<string, double> GetPricesPerShareBatch(List<string?> symbols)
     {
-        var prices = new Dictionary<string, double?>();
+        var prices = new Dictionary<string, double>();
         PythonEngine.Initialize();
         using (Py.GIL())
         {
@@ -21,18 +21,8 @@ public static class FinancialIndicatorCalculator
             foreach (var symbol in symbols)
             {
                 if (string.IsNullOrEmpty(symbol)) continue;
-                var tickerData = historyData[symbol];
-                if (tickerData == null || tickerData?.empty)
-                {
-                    var ticker = yf.Ticker(symbol);
-                    tickerData = ticker.history(period: "max");
-
-                    if (tickerData.empty)
-                    {
-                        prices[symbol] = null;
-                        continue;
-                    }
-                }
+                var tickerData = historyData["Ticker"][symbol];
+                if (tickerData == null || tickerData?.empty) continue;
 
                 double sum = 0;
                 double count = 0;
@@ -47,7 +37,7 @@ public static class FinancialIndicatorCalculator
                     count++;
                 }
 
-                prices[symbol] = count > 0 ? sum / count : null;
+                prices[symbol] = count > 0 ? sum / count : -1;
             }
         }
         return prices;

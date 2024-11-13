@@ -5,7 +5,8 @@ namespace SmartInvestor.Models;
 
 public class Company
 {
-    [PrimaryKey] public string? Cik { get; init; }
+    [PrimaryKey, AutoIncrement] public int? Id { get; init; }
+    [NotNull] public string? Cik { get; init; }
     [NotNull] public string? Name { get; init; }
     [NotNull] public string? Ticker { get; init; }
     [Ignore] public CompanyFacts? CompanyHistoryData { get; set; }

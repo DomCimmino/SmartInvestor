@@ -4,7 +4,8 @@ namespace SmartInvestor.Models.DTOs;
 
 public class CompanyDto
 {
-    [NotNull] [PrimaryKey] public string? Cik { get; init; }
+    [PrimaryKey, AutoIncrement] public int? Id { get; init; }
+    [NotNull] public string? Cik { get; init; }
     [NotNull] public string? Name { get; init; }
     [NotNull] public string? Ticker { get; init; }
     [NotNull] public double? MarketCap { get; init; }
