@@ -11,5 +11,4 @@ public interface ISqLiteService
     Task<bool> HasCompanyDtos();
     Task InsertCompanies(List<Company> companies);
     Task InsertCompanyDtos(List<CompanyDto> companyDtos);
-    Task<bool> IsCompanyUploaded(string cik);
 }

@@ -20,16 +20,16 @@ public class Application(ISqLiteService sqLiteService, IEdgarService edgarServic
     {
         var companies = await edgarService.GetCompanies();
         var filteredCompanies = new List<Company>();
-        await Parallel.ForEachAsync(companies, async (company, _) =>
+        foreach (var company in companies)
         {
+            if (filteredCompanies.Any(c => c.Cik == company.Cik)) continue;
             var companyFact = await edgarService.GetCompanyFacts(company.Cik ?? string.Empty);
-            if (companyFact?.HasAllNonNullProperties() == true)
-            {
-                company.CompanyHistoryData = companyFact;
-                company.JsonCompanyHistoryData = JsonConvert.SerializeObject(company.CompanyHistoryData);
-                filteredCompanies.Add(company);
-            }
-        });
+            if (companyFact?.HasAllNonNullProperties() != true) continue;
+            company.CompanyHistoryData = companyFact;
+            company.JsonCompanyHistoryData = JsonConvert.SerializeObject(company.CompanyHistoryData);
+            filteredCompanies.Add(company);
+        }
+
         await sqLiteService.InsertCompanies(filteredCompanies);
     }
 
@@ -37,11 +37,14 @@ public class Application(ISqLiteService sqLiteService, IEdgarService edgarServic
     {
         var companyDtos = new List<CompanyDto>();
         var companies = await sqLiteService.GetCompanies();
-        var pricesPerShare = FinancialIndicatorCalculator.GetPricesPerShareBatch(companies
+        var pricesPerShare = FinancialIndicatorCalculator.GetPricesPerShare(companies
             .Select(c => c.Ticker)
-            .Where(ticker => !string.IsNullOrEmpty(ticker)).ToList());
+            .Where(ticker => !string.IsNullOrEmpty(ticker) && !string.IsNullOrWhiteSpace(ticker)).ToList());
+        var filteredCompanies = companies
+            .Where(c => !string.IsNullOrEmpty(c.Ticker) && !string.IsNullOrWhiteSpace(c.Ticker) && pricesPerShare.ContainsKey(c.Ticker))
+            .ToList();
 
-        foreach (var company in companies)
+        foreach (var company in filteredCompanies)
         {
             var marketCap = company.CompanyHistoryData?.Facts?.DocumentAndEntityInformation?.EntityPublicFloat?.Unit
                 ?.Usd

@@ -69,10 +69,4 @@ public class SqLiteService : ISqLiteService
         await _database.DeleteAllAsync<CompanyDto>();
         await _database.InsertAllAsync(companyDtos);
     }
-
-    public async Task<bool> IsCompanyUploaded(string cik)
-    {
-        if (_database is null) return false;
-        return await _database.FindAsync<Company>(cik) != null;
-    }
 }

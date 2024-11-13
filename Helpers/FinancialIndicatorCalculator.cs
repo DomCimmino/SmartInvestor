@@ -9,39 +9,47 @@ public static class FinancialIndicatorCalculator
         return currentAssets / currentLiabilities;
     }
 
-    public static Dictionary<string, double> GetPricesPerShareBatch(List<string?> symbols)
-    {
-        var prices = new Dictionary<string, double>();
-        PythonEngine.Initialize();
-        using (Py.GIL())
-        {
-            dynamic yf = Py.Import("yfinance");
-            var historyData = yf.download(symbols, period: $"{DateTime.UtcNow.Year - 2019}y");
+    public static Dictionary<string, double> GetPricesPerShare(List<string?> symbols)
+         {
+             var prices = new Dictionary<string, double>();
+             PythonEngine.Initialize();
+             using (Py.GIL())
+             {
+                 dynamic yf = Py.Import("yfinance");
+                 
+                 var historyData = yf.download(symbols, start: "2019-01-01", end: "2019-12-31");
 
-            foreach (var symbol in symbols)
-            {
-                if (string.IsNullOrEmpty(symbol)) continue;
-                var tickerData = historyData["Ticker"][symbol];
-                if (tickerData == null || tickerData?.empty) continue;
+                 foreach (var symbol in symbols)
+                 {
+                     try
+                     {
+                         var tickerData = historyData["Close"].get(symbol);
+                         if (tickerData == null) continue;
 
-                double sum = 0;
-                double count = 0;
+                         double sum = 0;
+                         var count = 0;
 
-                foreach (var item in tickerData?.itertuples() ?? new List<dynamic>())
-                {
-                    var year = item.Index.year.As<int>();
-                    if (year != 2019) continue;
-
-                    var close = item.Close.As<double>();
-                    sum += double.IsNaN(close) ? 0 : close;
-                    count++;
-                }
-
-                prices[symbol] = count > 0 ? sum / count : -1;
-            }
-        }
-        return prices;
-    }
+                         foreach (var item in tickerData.items())
+                         {
+                             var close = item[1].As<double>();
+                             if (double.IsNaN(close)) continue;
+                             sum += close;
+                             count++;
+                         }
+                         
+                         if (count > 0 && symbol != null)
+                         {
+                             prices[symbol] = sum / count;
+                         }
+                     }
+                     catch (Exception ex)
+                     {
+                         Console.WriteLine($"Failed to process ticker '{symbol}': {ex.Message}");
+                     }
+                 }
+             }
+             return prices;
+         }
 
     public static double? PriceEarningsRatio(double pricePerShare, List<double?> earningsPerShare)
     {
