@@ -10,7 +10,7 @@ public class HttpClientFactory : IHttpClientFactory
         var httpClient = new HttpClient
         {
             DefaultRequestVersion = HttpVersion.Version20,
-            BaseAddress = new Uri("https://www.sec.gov/"),
+            BaseAddress = new Uri(Constants.BaseUri),
             Timeout = TimeSpan.FromMinutes(30)
         };
         httpClient.DefaultRequestHeaders.Add("User-Agent", "client application");

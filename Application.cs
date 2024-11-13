@@ -8,9 +8,6 @@ namespace SmartInvestor;
 
 public class Application(ISqLiteService sqLiteService, IEdgarService edgarService)
 {
-    private const int ReferenceYear = 2019;
-    private const string ReferenceForm = "10-K";
-
     public async Task Init()
     {
         await sqLiteService.InitDatabase();
@@ -51,31 +48,35 @@ public class Application(ISqLiteService sqLiteService, IEdgarService edgarServic
         foreach (var company in filteredCompanies)
         {
             company.CompanyHistoryData =
-                JsonConvert.DeserializeObject<CompanyFacts>(company.JsonCompanyHistoryData ?? string.Empty); 
-            
+                JsonConvert.DeserializeObject<CompanyFacts>(company.JsonCompanyHistoryData ?? string.Empty);
+
             var documentAndEntityInformation = company.CompanyHistoryData?.Facts?.DocumentAndEntityInformation;
             var financialReportingTaxonomy = company.CompanyHistoryData?.Facts?.FinancialReportingTaxonomy;
 
             var marketCap = FinancialIndicatorCalculator.GetValueForYearAndForm(
                 documentAndEntityInformation?.EntityPublicFloat ?? new BasicFact(),
-                ReferenceYear, ReferenceForm);
+                Constants.ReferenceYear, Constants.ReferenceForm);
 
             var outstandingShares = FinancialIndicatorCalculator.GetValueForYearAndForm(
                 financialReportingTaxonomy?.CommonStockSharesOutstanding ?? new BasicFact(),
-                ReferenceYear, ReferenceForm);
+                Constants.ReferenceYear, Constants.ReferenceForm);
 
             var assets = FinancialIndicatorCalculator.GetValueForYearAndForm(
                 financialReportingTaxonomy?.Assets ?? new BasicFact(),
-                ReferenceYear, ReferenceForm);
-            
+                Constants.ReferenceYear, Constants.ReferenceForm);
+
             var currentAssets = FinancialIndicatorCalculator.GetValueForYearAndForm(
                 financialReportingTaxonomy?.CurrentAssets ?? new BasicFact(),
-                ReferenceYear, ReferenceForm);
+                Constants.ReferenceYear, Constants.ReferenceForm);
 
             var currentLiabilities = FinancialIndicatorCalculator.GetValueForYearAndForm(
                 financialReportingTaxonomy?.Liabilities ?? new BasicFact(),
-                ReferenceYear, ReferenceForm);
-            
+                Constants.ReferenceYear, Constants.ReferenceForm);
+
+            var dividendGrowthYears =
+                FinancialIndicatorCalculator.GetGrowthYears(
+                    financialReportingTaxonomy?.PaidDividends ?? new BasicFact(), Constants.ReferenceForm);
+
             var pricePerShare = pricesPerShare.GetValueOrDefault(company.Ticker ?? string.Empty);
 
             var earningsPerShareValues = company.CompanyHistoryData?.Facts?.FinancialReportingTaxonomy?.EarningsPerShare
@@ -94,7 +95,8 @@ public class Application(ISqLiteService sqLiteService, IEdgarService edgarServic
                 PriceEarningsRatio =
                     FinancialIndicatorCalculator.PriceEarningsRatio(pricePerShare, earningsPerShareValues ?? []),
                 PriceBookValue = FinancialIndicatorCalculator.PriceBookValue(pricePerShare, assets,
-                    currentLiabilities, outstandingShares)
+                    currentLiabilities, outstandingShares),
+                DividendsGrowthYears = dividendGrowthYears
             });
         }
 

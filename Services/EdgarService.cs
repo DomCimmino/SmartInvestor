@@ -18,7 +18,7 @@ public class EdgarService(IHttpClientFactory clientFactory, IMapper mapper) : IE
         {
             if (_fileCache == null) InitializeFileCache();
 
-            var response = await clientFactory.GetHttpClient().GetAsync("files/company_tickers_exchange.json")
+            var response = await clientFactory.GetHttpClient().GetAsync(Constants.CompaniesApi)
                 .ConfigureAwait(false);
             if (response is { IsSuccessStatusCode: false, Content: null }) return [];
 
@@ -51,7 +51,7 @@ public class EdgarService(IHttpClientFactory clientFactory, IMapper mapper) : IE
         if (!Directory.EnumerateFileSystemEntries(_extractDataDirectory).Any())
         {
             var response = await clientFactory.GetHttpClient()
-                .GetAsync("Archives/edgar/daily-index/xbrl/companyfacts.zip").ConfigureAwait(false);
+                .GetAsync(Constants.CompanyFactsApi).ConfigureAwait(false);
             if (response is { IsSuccessStatusCode: true, Content: not null })
             {
                 await using var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
