@@ -8,6 +8,9 @@ namespace SmartInvestor;
 
 public class Application(ISqLiteService sqLiteService, IEdgarService edgarService)
 {
+    private const int ReferenceYear = 2019;
+    private const string ReferenceForm = "10-K";
+
     public async Task Init()
     {
         await sqLiteService.InitDatabase();
@@ -41,19 +44,38 @@ public class Application(ISqLiteService sqLiteService, IEdgarService edgarServic
             .Select(c => c.Ticker)
             .Where(ticker => !string.IsNullOrEmpty(ticker) && !string.IsNullOrWhiteSpace(ticker)).ToList());
         var filteredCompanies = companies
-            .Where(c => !string.IsNullOrEmpty(c.Ticker) && !string.IsNullOrWhiteSpace(c.Ticker) && pricesPerShare.ContainsKey(c.Ticker))
+            .Where(c => !string.IsNullOrEmpty(c.Ticker) && !string.IsNullOrWhiteSpace(c.Ticker) &&
+                        pricesPerShare.ContainsKey(c.Ticker))
             .ToList();
 
         foreach (var company in filteredCompanies)
         {
-            var marketCap = company.CompanyHistoryData?.Facts?.DocumentAndEntityInformation?.EntityPublicFloat?.Unit
-                ?.Usd
-                ?.FirstOrDefault(x => x is { FiscalYear: 2019, Form: "10-K" })?.Value ?? -1;
+            company.CompanyHistoryData =
+                JsonConvert.DeserializeObject<CompanyFacts>(company.JsonCompanyHistoryData ?? string.Empty); 
+            
+            var documentAndEntityInformation = company.CompanyHistoryData?.Facts?.DocumentAndEntityInformation;
+            var financialReportingTaxonomy = company.CompanyHistoryData?.Facts?.FinancialReportingTaxonomy;
 
-            var outstandingShares = company.CompanyHistoryData?.Facts?.FinancialReportingTaxonomy
-                ?.CommonStockSharesOutstanding?.Unit?.Shares
-                ?.FirstOrDefault(x => x is { FiscalYear: 2019, Form: "10-K" })?.Value ?? -1;
+            var marketCap = FinancialIndicatorCalculator.GetValueForYearAndForm(
+                documentAndEntityInformation?.EntityPublicFloat ?? new BasicFact(),
+                ReferenceYear, ReferenceForm);
 
+            var outstandingShares = FinancialIndicatorCalculator.GetValueForYearAndForm(
+                financialReportingTaxonomy?.CommonStockSharesOutstanding ?? new BasicFact(),
+                ReferenceYear, ReferenceForm);
+
+            var assets = FinancialIndicatorCalculator.GetValueForYearAndForm(
+                financialReportingTaxonomy?.Assets ?? new BasicFact(),
+                ReferenceYear, ReferenceForm);
+            
+            var currentAssets = FinancialIndicatorCalculator.GetValueForYearAndForm(
+                financialReportingTaxonomy?.CurrentAssets ?? new BasicFact(),
+                ReferenceYear, ReferenceForm);
+
+            var currentLiabilities = FinancialIndicatorCalculator.GetValueForYearAndForm(
+                financialReportingTaxonomy?.Liabilities ?? new BasicFact(),
+                ReferenceYear, ReferenceForm);
+            
             var pricePerShare = pricesPerShare.GetValueOrDefault(company.Ticker ?? string.Empty);
 
             var earningsPerShareValues = company.CompanyHistoryData?.Facts?.FinancialReportingTaxonomy?.EarningsPerShare
@@ -61,16 +83,6 @@ public class Application(ISqLiteService sqLiteService, IEdgarService edgarServic
                 ?.Where(x => x is { Form: "10-K", FiscalYear: 2019 or 2018 or 2017, Value: not null })
                 .Select(x => (double?)x.Value)
                 .ToList();
-
-            var assets = company.CompanyHistoryData?.Facts?.FinancialReportingTaxonomy?.Assets?.Unit?.Usd
-                ?.FirstOrDefault(x => x is { FiscalYear: 2019, Form: "10-K" })?.Value ?? -1;
-
-            var currentAssets = company.CompanyHistoryData?.Facts?.FinancialReportingTaxonomy?.CurrentAssets?.Unit?.Usd
-                ?.FirstOrDefault(x => x is { FiscalYear: 2019, Form: "10-K" })?.Value ?? -1;
-
-            var currentLiabilities = company.CompanyHistoryData?.Facts?.FinancialReportingTaxonomy?.Liabilities?.Unit
-                ?.Usd
-                ?.FirstOrDefault(x => x is { FiscalYear: 2019, Form: "10-K" })?.Value ?? -1;
 
             companyDtos.Add(new CompanyDto
             {

@@ -1,9 +1,22 @@
 using Python.Runtime;
+using SmartInvestor.Models;
 
 namespace SmartInvestor.Helpers;
 
 public static class FinancialIndicatorCalculator
 {
+    public static double GetValueForYearAndForm(BasicFact basicFact, int year, string form)
+    {
+        if (basicFact.Unit == null) return -1;
+        
+        var units = basicFact.Unit.Shares ?? basicFact.Unit.Usd ?? basicFact.Unit.UsdAndShares;
+        
+        var matchingUnit = units?
+            .FirstOrDefault(x => x.FiscalYear == year && x.Form == form);
+        
+        return matchingUnit?.Value ?? -1;
+    }
+    
     public static double CurrentRatio(double currentAssets, double currentLiabilities)
     {
         return currentAssets / currentLiabilities;
@@ -56,7 +69,7 @@ public static class FinancialIndicatorCalculator
         return pricePerShare / earningsPerShare.Average();
     }
 
-    public static double PriceBookValue(double pricePerShare, long totalAssets, long totalLiabilities,
+    public static double PriceBookValue(double pricePerShare, double totalAssets, double totalLiabilities,
         double numberOfOutstandingShares)
     {
         return pricePerShare / ((totalAssets - totalLiabilities) / numberOfOutstandingShares);
