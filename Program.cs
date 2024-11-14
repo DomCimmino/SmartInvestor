@@ -2,6 +2,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using SmartInvestor.HttpManager;
 using SmartInvestor.Mapper;
+using SmartInvestor.Repositories;
+using SmartInvestor.Repositories.Interfaces;
 using SmartInvestor.Services;
 using SmartInvestor.Services.Interfaces;
 
@@ -25,8 +27,9 @@ internal static class Program
             .AddSingleton<Application, Application>()
             .AddSingleton(mapper)
             .AddSingleton<IHttpClientFactory, HttpClientFactory>()
-            .AddSingleton<ISqLiteService, SqLiteService>()
-            .AddSingleton<IEdgarService, EdgarService>();
+            .AddSingleton<ICompanyRepository, CompanyRepository>()
+            .AddSingleton<IEdgarRepository, EdgarRepository>()
+            .AddSingleton<ICompanyService, CompanyService>();
         return services;
     }
 }

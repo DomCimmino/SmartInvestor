@@ -9,12 +9,12 @@ public static class FinancialIndicatorCalculator
     {
         var units = CheckBasicFacts(basicFact);
 
-        if (units.Count == 0) return -1;
+        if (units.Count == 0) return 1;
 
-        var matchingUnit = units?
+        var matchingUnit = units
             .FirstOrDefault(x => x is { FiscalYear: Constants.ReferenceYear, Form: Constants.ReferenceForm });
 
-        return matchingUnit?.Value ?? -1;
+        return matchingUnit?.Value ?? 1;
     }
 
     public static int GetGrowthYears(BasicFact basicFact)
@@ -57,9 +57,9 @@ public static class FinancialIndicatorCalculator
         return orderedValues.First() != 0 ? (int)((orderedValues.Last() - orderedValues.First()) / Math.Abs((double)orderedValues.First())) * 100 : 0;
     }
 
-    public static double CurrentRatio(double currentAssets, double currentLiabilities)
+    public static double? CurrentRatio(double currentAssets, double currentLiabilities)
     {
-        return currentAssets / currentLiabilities;
+        return double.IsNaN(currentAssets / currentLiabilities) ? 0 : currentAssets / currentLiabilities;
     }
 
     public static Dictionary<string, double> GetPricesPerShare(List<string?> symbols)
@@ -107,6 +107,7 @@ public static class FinancialIndicatorCalculator
 
     public static double? PriceEarningsRatio(double pricePerShare, List<double?> earningsPerShare)
     {
+        if (earningsPerShare.Count == 0) return 0;
         return pricePerShare / earningsPerShare.Average();
     }
 

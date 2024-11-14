@@ -3,9 +3,10 @@ using SQLite;
 
 namespace SmartInvestor.Models;
 
+[Table(Constants.CompaniesTable)]
 public class Company
 {
-    [PrimaryKey] public string? Cik { get; init; }
+    [PrimaryKey] [MaxLength(10)]  public string? Cik { get; init; }
     [NotNull] public string? Name { get; init; }
     [NotNull] public string? Ticker { get; init; }
     [Ignore] public CompanyFacts? CompanyHistoryData { get; set; }

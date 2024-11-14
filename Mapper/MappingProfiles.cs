@@ -8,10 +8,11 @@ public class MappingProfiles : Profile
 {
     public MappingProfiles()
     {
-        CreateCompanyMap();
+        CreateCompanyMapProfile();
+        CreateCompanyDtoMapProfile();
     }
 
-    private void CreateCompanyMap()
+    private void CreateCompanyMapProfile()
     {
         CreateMap<List<object>, Company>()
             .ConvertUsing(source => new Company
@@ -20,5 +21,14 @@ public class MappingProfiles : Profile
                 Name = source[1].ToString() ?? string.Empty,
                 Ticker = source[2].ToString() ?? string.Empty
             });
+    }
+
+    private void CreateCompanyDtoMapProfile()
+    {
+        CreateMap<Company, CompanyDto>()
+            .ForMember(dest => dest.Cik, opt => opt.MapFrom(src => src.Cik))
+            .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
+            .ForMember(dest => dest.Ticker, opt => opt.MapFrom(src => src.Ticker))
+            .ReverseMap();
     }
 }

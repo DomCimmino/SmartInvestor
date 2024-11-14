@@ -2,6 +2,8 @@ namespace SmartInvestor;
 
 public static class Constants
 {
+    public const string CompaniesTable = "Companies";
+    public const string CompanyDtosTable = "CompanyDtos";
     public const int ReferenceYear = 2019;
     public const string ReferenceForm = "10-K";
     public const string BaseUri = "https://www.sec.gov/";

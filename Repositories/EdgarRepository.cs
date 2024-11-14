@@ -3,11 +3,11 @@ using AutoMapper;
 using Newtonsoft.Json;
 using SmartInvestor.HttpManager;
 using SmartInvestor.Models;
-using SmartInvestor.Services.Interfaces;
+using SmartInvestor.Repositories.Interfaces;
 
-namespace SmartInvestor.Services;
+namespace SmartInvestor.Repositories;
 
-public class EdgarService(IHttpClientFactory clientFactory, IMapper mapper) : IEdgarService
+public class EdgarRepository(IHttpClientFactory clientFactory, IMapper mapper) : IEdgarRepository
 {
     private string? _extractDataDirectory;
     private Dictionary<string, string>? _fileCache;
@@ -45,21 +45,25 @@ public class EdgarService(IHttpClientFactory clientFactory, IMapper mapper) : IE
         _extractDataDirectory = Path.Combine(baseDirectory, "ExtractedData");
         var zipPath = Path.Combine(baseDirectory, "companyfacts.zip");
 
-        Directory.CreateDirectory(baseDirectory);
-        Directory.CreateDirectory(_extractDataDirectory);
+        if (!Directory.Exists(baseDirectory)) Directory.CreateDirectory(baseDirectory);
+        if (!Directory.Exists(_extractDataDirectory)) Directory.CreateDirectory(_extractDataDirectory);
 
         if (!Directory.EnumerateFileSystemEntries(_extractDataDirectory).Any())
         {
+            Console.WriteLine("Start download companies facts");
             var response = await clientFactory.GetHttpClient()
                 .GetAsync(Constants.CompanyFactsApi).ConfigureAwait(false);
             if (response is { IsSuccessStatusCode: true, Content: not null })
             {
+                Console.WriteLine("End download companies facts");
                 await using var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
                 await using var fileStream = File.Create(zipPath);
                 await stream.CopyToAsync(fileStream).ConfigureAwait(false);
             }
-
+            
+            Console.WriteLine("Start unzip companies facts");
             ZipFile.ExtractToDirectory(zipPath, _extractDataDirectory, true);
+            Console.WriteLine("End unzip companies facts");
             InitializeFileCache();
         }
     }

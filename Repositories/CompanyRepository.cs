@@ -1,11 +1,11 @@
 using SmartInvestor.Models;
 using SmartInvestor.Models.DTOs;
-using SmartInvestor.Services.Interfaces;
+using SmartInvestor.Repositories.Interfaces;
 using SQLite;
 
-namespace SmartInvestor.Services;
+namespace SmartInvestor.Repositories;
 
-public class SqLiteService : ISqLiteService
+public class CompanyRepository : ICompanyRepository
 {
     private const SQLiteOpenFlags Flags =
         SQLiteOpenFlags.Create |

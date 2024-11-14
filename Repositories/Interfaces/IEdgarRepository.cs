@@ -1,8 +1,8 @@
 using SmartInvestor.Models;
 
-namespace SmartInvestor.Services.Interfaces;
+namespace SmartInvestor.Repositories.Interfaces;
 
-public interface IEdgarService
+public interface IEdgarRepository
 {
     Task<List<Company>> GetCompanies();
     Task DownloadCompaniesFacts();

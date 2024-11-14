@@ -1,9 +1,9 @@
 using SmartInvestor.Models;
 using SmartInvestor.Models.DTOs;
 
-namespace SmartInvestor.Services.Interfaces;
+namespace SmartInvestor.Repositories.Interfaces;
 
-public interface ISqLiteService
+public interface ICompanyRepository
 {
     Task InitDatabase();
     Task<List<Company>> GetCompanies();
