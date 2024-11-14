@@ -5,6 +5,7 @@ import yfinance as yf
 import matplotlib.pyplot as plt
 from operator import itemgetter
 
+
 def plot_stock_history(tickers, top_3_companies):
     plt.figure(figsize=(12, 8))
     for ticker, (_, _, score) in zip(tickers, top_3_companies):
@@ -17,18 +18,20 @@ def plot_stock_history(tickers, top_3_companies):
     plt.title("Historical performance of the top three selected companies")
     plt.xlabel("Date")
     plt.ylabel("Closing Price")
-    
+
     ranking_text = "Ranking:\n" + "\n".join([
-        f"{i+1}. {company[0]} (Score: {company[2]:.2f})"
+        f"{i + 1}. {company[0]} (Score: {company[2]:.2f})"
         for i, company in enumerate(top_3_companies)
     ])
-    
-    plt.gcf().text(0.02, 0.98, ranking_text, fontsize=10, verticalalignment='top', bbox=dict(facecolor='white', alpha=0.8))
-    
+
+    plt.gcf().text(0.02, 0.98, ranking_text, fontsize=10, verticalalignment='top',
+                   bbox=dict(facecolor='white', alpha=0.8))
+
     plt.legend()
     plt.show()
 
-db_path = Path(__file__).resolve().parent.parent / "Resources" / "smart_investor.db3" 
+
+db_path = Path(__file__).resolve().parent.parent / "Resources" / "smart_investor.db3"
 
 if not db_path.exists():
     print(f"Database not found: {db_path}")
@@ -49,16 +52,15 @@ cursor.execute(query)
 companies = cursor.fetchall()
 conn.close()
 
-
 problem = LpProblem("Company_Optimization", LpMaximize)
 
 var_dict = {company[0]: LpVariable(f"select_{company[0]}", cat="Binary") for company in companies}
 
 problem += lpSum([
     var_dict[company[0]] * (
-        (company[7] / 100) +   # EarningsGrowthPercentage
-        company[8] +   # DividendsGrowthYears
-        company[9]     # EarningsPerShareGrowthYears
+            (company[7] / 100) +  # EarningsGrowthPercentage
+            company[8] +  # DividendsGrowthYears
+            company[9]  # EarningsPerShareGrowthYears
     ) for company in companies
 ])
 
@@ -77,4 +79,3 @@ top_3_companies = selected_companies[:3]
 top_3_tickers = [company[1] for company in top_3_companies]
 
 plot_stock_history(top_3_tickers, top_3_companies)
-
