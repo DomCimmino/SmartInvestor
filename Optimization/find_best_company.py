@@ -43,10 +43,6 @@ cursor = conn.cursor()
 
 query = """
 SELECT * FROM CompanyDtos
-WHERE MarketCap > 100000000 
-  AND CurrentRatio > 2 
-  AND PriceBookValue < 2.5 
-  AND PriceEarningsRatio < 15
 """
 cursor.execute(query)
 companies = cursor.fetchall()
@@ -54,21 +50,37 @@ conn.close()
 
 problem = LpProblem("Company_Optimization", LpMaximize)
 
-var_dict = {company[0]: LpVariable(f"select_{company[0]}", cat="Binary") for company in companies}
+valid_companies = [
+    company for company in companies
+    if all(value is not None and not isinstance(value, float) or not (value != value or abs(value) == float('inf'))
+           for value in [company[3], company[4], company[5], company[6]])
+]
+
+var_dict = {company[0]: LpVariable(f"select_{company[0]}", cat="Binary") for company in valid_companies}
+
+
+for company in valid_companies:
+    var = var_dict[company[0]]
+    problem += (var * company[4] >= 2 * var), f"CurrentRatio_{company[0]}"  
+    problem += (var * company[5] <= 2.5 * var), f"PriceBookValue_{company[0]}"  
+    problem += (var * company[6] <= 15 * var), f"PriceEarningsRatio_Upper_{company[0]}" 
+    problem += (var * company[3] >= 1e8 * var), f"MarketCap_{company[0]}" 
+
+
 
 problem += lpSum([
     var_dict[company[0]] * (
-            (company[7] / 100) +  # EarningsGrowthPercentage
-            company[8] +  # DividendsGrowthYears
-            company[9]  # EarningsPerShareGrowthYears
-    ) for company in companies
+            (company[7] / 100) +  
+            company[8] +  
+            company[9] 
+    ) for company in valid_companies
 ])
 
 problem.solve()
 
 selected_companies = [
     (company[1], company[2], (company[7] / 100) + company[8] + company[9])
-    for company in companies if var_dict[company[0]].value() == 1
+    for company in valid_companies if var_dict[company[0]].value() == 1
 ]
 
 selected_companies.sort(key=itemgetter(2), reverse=True)
