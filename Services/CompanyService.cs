@@ -50,40 +50,42 @@ public class CompanyService(ICompanyRepository companyRepository, IEdgarReposito
 
         var companyDtos = companies
             .Where(c => !string.IsNullOrEmpty(c.Ticker) && pricesPerShare.ContainsKey(c.Ticker))
-            .Select(company =>
-            {
-                company.CompanyHistoryData = JsonConvert.DeserializeObject<CompanyFacts>(company.JsonCompanyHistoryData ?? string.Empty);
-
-                var financialData = company.CompanyHistoryData?.Facts?.FinancialReportingTaxonomy ?? new FinancialReportingTaxonomy();
-                var documentInfo = company.CompanyHistoryData?.Facts?.DocumentAndEntityInformation;
-
-                var pricePerShare = pricesPerShare.GetValueOrDefault(company.Ticker ?? string.Empty);
-                var earningsPerShareValues = financialData.EarningsPerShare?.Unit?.UsdAndShares
-                    ?.Where(x => x is { Form: "10-K", FiscalYear: 2019 or 2018 or 2017, Value: not null })
-                    .Select(x => (double?)x.Value)
-                    .ToList();
-
-                var companyDto = mapper.Map<CompanyDto>(company);
-                companyDto.MarketCap = FinancialIndicatorCalculator.GetValueForYearAndForm(documentInfo?.EntityPublicFloat ?? new BasicFact());
-                companyDto.CurrentRatio = FinancialIndicatorCalculator.CurrentRatio(
-                    FinancialIndicatorCalculator.GetValueForYearAndForm(financialData.CurrentAssets ?? new BasicFact()),
-                    FinancialIndicatorCalculator.GetValueForYearAndForm(financialData.Liabilities ?? new BasicFact())
-                );
-                companyDto.PriceEarningsRatio = FinancialIndicatorCalculator.PriceEarningsRatio(pricePerShare, earningsPerShareValues ?? []);
-                companyDto.PriceBookValue = FinancialIndicatorCalculator.PriceBookValue(
-                    pricePerShare,
-                    FinancialIndicatorCalculator.GetValueForYearAndForm(financialData.Assets ?? new BasicFact()),
-                    FinancialIndicatorCalculator.GetValueForYearAndForm(financialData.Liabilities ?? new BasicFact()),
-                    FinancialIndicatorCalculator.GetValueForYearAndForm(financialData.CommonStockSharesOutstanding ?? new BasicFact())
-                );
-                companyDto.DividendsGrowthYears = FinancialIndicatorCalculator.GetGrowthYears(financialData.PaidDividends ?? new BasicFact());
-                companyDto.EarningsGrowthPercentage = FinancialIndicatorCalculator.GetEarningsGrowthPercentage(financialData.EarningsPerShare ?? new BasicFact());
-                companyDto.EarningsPerShareGrowthYears = FinancialIndicatorCalculator.GetGrowthYears(financialData.EarningsPerShare ?? new BasicFact());
-
-                return companyDto;
-            })
+            .Select(company => MapCompany(company, pricesPerShare))
             .ToList();
 
         await companyRepository.InsertCompanyDtos(companyDtos);
+    }
+
+    private CompanyDto MapCompany(Company company, Dictionary<string, double> pricesPerShare)
+    {
+        company.CompanyHistoryData = JsonConvert.DeserializeObject<CompanyFacts>(company.JsonCompanyHistoryData ?? string.Empty);
+
+        var financialData = company.CompanyHistoryData?.Facts?.FinancialReportingTaxonomy ?? new FinancialReportingTaxonomy();
+        var documentInfo = company.CompanyHistoryData?.Facts?.DocumentAndEntityInformation;
+
+        var pricePerShare = pricesPerShare.GetValueOrDefault(company.Ticker ?? string.Empty);
+        var earningsPerShareValues = financialData.EarningsPerShare?.Unit?.UsdAndShares
+            ?.Where(x => x is { Form: "10-K", FiscalYear: 2019 or 2018 or 2017, Value: not null })
+            .Select(x => (double?)x.Value)
+            .ToList();
+
+        var companyDto = mapper.Map<CompanyDto>(company);
+        companyDto.MarketCap = FinancialIndicatorCalculator.GetValueForYearAndForm(documentInfo?.EntityPublicFloat ?? new BasicFact());
+        companyDto.CurrentRatio = FinancialIndicatorCalculator.CurrentRatio(
+            FinancialIndicatorCalculator.GetValueForYearAndForm(financialData.CurrentAssets ?? new BasicFact()),
+            FinancialIndicatorCalculator.GetValueForYearAndForm(financialData.Liabilities ?? new BasicFact())
+        );
+        companyDto.PriceEarningsRatio = FinancialIndicatorCalculator.PriceEarningsRatio(pricePerShare, earningsPerShareValues ?? []);
+        companyDto.PriceBookValue = FinancialIndicatorCalculator.PriceBookValue(
+            pricePerShare,
+            FinancialIndicatorCalculator.GetValueForYearAndForm(financialData.Assets ?? new BasicFact()),
+            FinancialIndicatorCalculator.GetValueForYearAndForm(financialData.Liabilities ?? new BasicFact()),
+            FinancialIndicatorCalculator.GetValueForYearAndForm(financialData.CommonStockSharesOutstanding ?? new BasicFact())
+        );
+        companyDto.DividendsGrowthYears = FinancialIndicatorCalculator.GetGrowthYears(financialData.PaidDividends ?? new BasicFact());
+        companyDto.EarningsGrowthPercentage = FinancialIndicatorCalculator.GetEarningsGrowthPercentage(financialData.EarningsPerShare ?? new BasicFact());
+        companyDto.EarningsPerShareGrowthYears = FinancialIndicatorCalculator.GetGrowthYears(financialData.EarningsPerShare ?? new BasicFact());
+
+        return companyDto;
     }
 }
