@@ -17,15 +17,18 @@
 
     <ItemGroup>
         <Compile Remove="Resources\**"/>
+        <Compile Remove="Optimization\__pycache__\**" />
     </ItemGroup>
 
     <ItemGroup>
         <EmbeddedResource Remove="Resources\**"/>
+        <EmbeddedResource Remove="Optimization\__pycache__\**" />
     </ItemGroup>
 
     <ItemGroup>
         <None Remove="Resources\**"/>
         <None Remove=".gitignore" />
+        <None Remove="Optimization\__pycache__\**" />
     </ItemGroup>
 
 </Project>
