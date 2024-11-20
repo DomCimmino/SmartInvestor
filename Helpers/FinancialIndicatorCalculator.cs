@@ -28,7 +28,24 @@ public static class FinancialIndicatorCalculator
                 g => g.Sum(u => u.Value ?? 0)
             );
 
-        return groupedByFiscalYear.Select(fiscalYear => fiscalYear.Value)
+        var sortedYears = groupedByFiscalYear.OrderBy(kv => kv.Key).ToList();
+        
+        var differentialGrowthScore = 0;
+        for (var i = 1; i < sortedYears.Count; i++)
+        {
+            var previousValue = sortedYears[i - 1].Value;
+            var currentValue = sortedYears[i].Value;
+            var difference = currentValue - previousValue;
+            
+            differentialGrowthScore += difference switch
+            {
+                > 0 => 2,  
+                0 => 1,    
+                < 0 => -1  
+            };
+        }
+        
+        var baseGrowthScore = groupedByFiscalYear.Select(fiscalYear => fiscalYear.Value)
             .Select(totalValue => totalValue switch
             {
                 > 0 => 1,
@@ -36,6 +53,8 @@ public static class FinancialIndicatorCalculator
                 < 0 => -2
             })
             .Sum();
+        
+        return baseGrowthScore + differentialGrowthScore;
     }
 
     public static int GetEarningsGrowthPercentage(BasicFact basicFact)
