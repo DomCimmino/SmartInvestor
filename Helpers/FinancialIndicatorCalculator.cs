@@ -33,7 +33,7 @@ public static class FinancialIndicatorCalculator
             {
                 > 0 => 1,
                 0 => 0,
-                < 0 => -1
+                < 0 => -2
             })
             .Sum();
     }
