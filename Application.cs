@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using SmartInvestor.Helpers;
 using SmartInvestor.Services.Interfaces;
 

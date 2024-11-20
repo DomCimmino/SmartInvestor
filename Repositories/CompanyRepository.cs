@@ -7,21 +7,13 @@ namespace SmartInvestor.Repositories;
 
 public class CompanyRepository : ICompanyRepository
 {
-    private const SQLiteOpenFlags Flags =
-        SQLiteOpenFlags.Create |
-        SQLiteOpenFlags.ReadWrite |
-        SQLiteOpenFlags.SharedCache;
-
-    private static readonly string DatabasePath =
-        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\Resources", "smart_investor.db3");
-
     private SQLiteAsyncConnection? _database;
 
     public async Task InitDatabase()
     {
         if (_database is not null) return;
 
-        _database = new SQLiteAsyncConnection(DatabasePath, Flags);
+        _database = new SQLiteAsyncConnection(Constants.DatabasePath, Constants.Flags);
         try
         {
             if (_database.TableMappings.All(x => x.MappedType.Name != nameof(CompanyDto)) &&
