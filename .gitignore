@@ -1,6 +1,7 @@
 bin/
 obj/
 Resources/
+Optimization/__pycache__/
 .idea/
 *.sln.iml
 /packages/
