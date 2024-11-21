@@ -6,14 +6,15 @@ def plot_stock_history(tickers, top_3_companies):
     plt.figure(figsize=(12, 8))
     investment_results = []
     for ticker, (_, _, score) in zip(tickers, top_3_companies):
-        stock_data = yf.Ticker(ticker).history(start="2019-01-01")
-        start_price = stock_data["Close"].iloc[0]
+        stock_data = yf.Ticker(ticker).history(start="2010-01-01")
+        stock_data_2019 = stock_data.loc["2019-01-01":]
+        start_price_2019 = stock_data_2019["Close"].iloc[0]
         current_price = stock_data["Close"].iloc[-1]
-        growth_percentage = ((current_price - start_price) / start_price) * 100
+        growth_percentage = ((current_price - start_price_2019) / start_price_2019) * 100
         initial_investment = 10000
-        final_value = initial_investment * (current_price / start_price)
+        final_value = initial_investment * (current_price / start_price_2019)
         investment_results.append((ticker, final_value))
-        plt.plot(stock_data.index, stock_data["Close"], label=f"{ticker} ({growth_percentage:.2f}%)")
+        plt.plot(stock_data.index, stock_data["Close"], label=f"{ticker} ({growth_percentage:.2f}%) from 2019")
 
     plt.title("Historical performance of the top three selected companies")
     plt.xlabel("Date")
