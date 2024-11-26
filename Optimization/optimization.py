@@ -15,10 +15,10 @@ def setup_optimization_problem(valid_companies):
 
     for company in valid_companies:
         var = var_dict[company[0]]
-        problem += (var * company[4] >= 2 * var), f"CurrentRatio_{company[0]}"
-        problem += (var * company[5] <= 2.5 * var), f"PriceBookValue_{company[0]}"
-        problem += (var * company[6] <= 15 * var), f"PriceEarningsRatio_Upper_{company[0]}"
-        problem += (var * company[3] >= 1e8 * var), f"MarketCap_{company[0]}"
+        problem += (var * company[4] >= 2), f"CurrentRatio_{company[0]}"
+        problem += (var * company[5] <= 2.5), f"PriceBookValue_{company[0]}"
+        problem += (var * company[6] <= 15), f"PriceEarningsRatio_Upper_{company[0]}"
+        problem += (var * company[3] >= 1e8), f"MarketCap_{company[0]}"
 
     problem += lpSum([
         var_dict[company[0]] * (
