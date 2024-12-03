@@ -1,6 +1,6 @@
 from db_handler import fetch_companies
 from optimization import filter_valid_companies, setup_optimization_problem, extract_selected_companies
-from plotter import plot_stock_history
+from plotter import plot
 from operator import itemgetter
 
 
@@ -16,7 +16,7 @@ def main():
 
     top_3_companies = selected_companies[:3]
     top_3_tickers = [company[1] for company in top_3_companies]
-    plot_stock_history(top_3_tickers, top_3_companies)
+    plot(top_3_tickers, top_3_companies)
 
 
 if __name__ == "__main__":
