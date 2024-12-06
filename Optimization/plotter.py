@@ -57,7 +57,7 @@ def plot_stock_history(fig, ax, tickers, top_companies):
         ax.scatter(datetime(2019, 1, 1), start_price_2019, color='red', zorder=5)
 
     ylim = ax.get_ylim()
-    add_highlight_ellipse(ax, COVID_PERIOD, ylim[1] * 0.2, ylim[1] * 0.5, 'blue', "COVID-19")
+    add_highlight_ellipse(ax, COVID_PERIOD, ylim[1] * 0.35, ylim[1] * 0.8, 'blue', "COVID-19")
     add_highlight_ellipse(ax, UKRAINE_WAR_PERIOD, ylim[1] * 0.5, ylim[1] * 1.2, 'orange', "War in Ukraine")
     add_highlight_ellipse(ax, GAZA_WAR_PERIOD, ylim[1] * 0.5, ylim[1] * 1.2, 'brown', "War in Gaza")
 

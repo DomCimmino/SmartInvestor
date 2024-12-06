@@ -39,9 +39,9 @@ public static class FinancialIndicatorCalculator
             
             differentialGrowthScore += difference switch
             {
-                > 0 => 2,  
-                0 => 1,    
-                < 0 => -1  
+                > 0 => 1,  
+                0 => 0,    
+                < 0 => -2  
             };
         }
         
@@ -73,7 +73,15 @@ public static class FinancialIndicatorCalculator
         
         if (orderedValues.Count < 2) return 0;
         
-        return orderedValues.First() != 0 ? (int)((orderedValues.Last() - orderedValues.First()) / Math.Abs((double)orderedValues.First())) * 100 : 0;
+        var groupSize = orderedValues.Count >= 6 ? 3 :
+            orderedValues.Count >= 4 ? 2 : 1;
+        
+        var firstAverage = orderedValues.Take(groupSize).Average();
+        var lastAverage = orderedValues.TakeLast(groupSize).Average();
+        
+        return firstAverage != 0
+            ? (int)((lastAverage - firstAverage) / Math.Abs(firstAverage) * 100)
+            : 0;
     }
 
     public static double? CurrentRatio(double currentAssets, double currentLiabilities)
@@ -89,29 +97,20 @@ public static class FinancialIndicatorCalculator
         {
             dynamic yf = Py.Import("yfinance");
 
-            var historyData = yf.download(symbols, start: "2019-01-01", end: "2019-12-31");
+            var historyData = yf.download(symbols, start: "2019-01-02", end: "2019-01-03");
 
             foreach (var symbol in symbols)
             {
                 try
                 {
-                    var tickerData = historyData["Close"].get(symbol);
+                    var tickerData = historyData["Open"].get(symbol);
                     if (tickerData == null) continue;
 
-                    double sum = 0;
-                    var count = 0;
+                    var price = tickerData.loc["2019-01-02"].As<double>();
 
-                    foreach (var item in tickerData.items())
+                    if (!string.IsNullOrEmpty(symbol) && !double.IsNaN(price))
                     {
-                        var close = item[1].As<double>();
-                        if (double.IsNaN(close)) continue;
-                        sum += close;
-                        count++;
-                    }
-
-                    if (count > 0 && symbol != null)
-                    {
-                        prices[symbol] = sum / count;
+                        prices[symbol] = price;
                     }
                 }
                 catch (Exception ex)
