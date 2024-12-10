@@ -19,10 +19,11 @@ def setup_optimization_problem(valid_companies):
         problem += (var * company[5] <= 2.5), f"PriceBookValue_{company[0]}"
         problem += (var * company[6] <= 15), f"PriceEarningsRatio_Upper_{company[0]}"
         problem += (var * company[3] >= 2e9), f"MarketCap_{company[0]}"
+        problem += (var * company[7] >= 33), f"EarningsGrowthPercentage_{company[0]}"
 
     problem += lpSum([
         var_dict[company[0]] * (
-                (company[7] / 100) +
+                company[7] +
                 company[8] +
                 company[9]
         ) for company in valid_companies
