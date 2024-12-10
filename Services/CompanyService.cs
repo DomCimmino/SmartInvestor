@@ -46,30 +46,28 @@ public class CompanyService(ICompanyRepository companyRepository, IEdgarReposito
 
         var companies = await companyRepository.GetCompanies();
         var tickers = companies.Select(c => c.Ticker).Where(t => !string.IsNullOrWhiteSpace(t)).Distinct().ToList();
-        var pricesPerShare = FinancialIndicatorCalculator.GetPricesPerShare(tickers);
+        var pricesPerShare = companyRepository.GetPricesPerShare(tickers);
 
         var companyDtos = companies
             .Where(c => !string.IsNullOrEmpty(c.Ticker) && pricesPerShare.ContainsKey(c.Ticker))
-            .Select(company => MapCompany(company, pricesPerShare))
+            .Select(company => MapCompany(company, pricesPerShare.GetValueOrDefault(company.Ticker ?? string.Empty)))
             .ToList();
 
         await companyRepository.InsertCompanyDtos(companyDtos);
     }
 
-    private CompanyDto MapCompany(Company company, Dictionary<string, double> pricesPerShare)
+    private CompanyDto MapCompany(Company company,  double pricePerShare)
     {
         company.CompanyHistoryData = JsonConvert.DeserializeObject<CompanyFacts>(company.JsonCompanyHistoryData ?? string.Empty);
 
         var financialData = company.CompanyHistoryData?.Facts?.FinancialReportingTaxonomy ?? new FinancialReportingTaxonomy();
         var documentInfo = company.CompanyHistoryData?.Facts?.DocumentAndEntityInformation;
-
-        var pricePerShare = pricesPerShare.GetValueOrDefault(company.Ticker ?? string.Empty);
         var earningsPerShareValues = financialData.EarningsPerShare?.Unit?.UsdAndShares
             ?.Where(x => x is { Form: "10-K", FiscalYear: 2019 or 2018 or 2017, Value: not null })
             .Select(x => (double?)x.Value)
             .ToList();
-
         var companyDto = mapper.Map<CompanyDto>(company);
+        
         companyDto.MarketCap = FinancialIndicatorCalculator.GetValueForYearAndForm(documentInfo?.EntityPublicFloat ?? new BasicFact());
         companyDto.CurrentRatio = FinancialIndicatorCalculator.CurrentRatio(
             FinancialIndicatorCalculator.GetValueForYearAndForm(financialData.CurrentAssets ?? new BasicFact()),
