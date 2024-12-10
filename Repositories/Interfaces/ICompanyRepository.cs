@@ -11,4 +11,5 @@ public interface ICompanyRepository
     Task<bool> HasCompanyDtos();
     Task InsertCompanies(List<Company> companies);
     Task InsertCompanyDtos(List<CompanyDto> companyDtos);
+    Dictionary<string, double> GetPricesPerShare(List<string?> symbols);
 }

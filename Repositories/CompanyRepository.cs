@@ -1,3 +1,4 @@
+using Python.Runtime;
 using SmartInvestor.Models;
 using SmartInvestor.Models.DTOs;
 using SmartInvestor.Repositories.Interfaces;
@@ -60,5 +61,39 @@ public class CompanyRepository : ICompanyRepository
         if (_database is null) return;
         await _database.DeleteAllAsync<CompanyDto>();
         await _database.InsertAllAsync(companyDtos);
+    }
+    
+    public Dictionary<string, double> GetPricesPerShare(List<string?> symbols)
+    {
+        var prices = new Dictionary<string, double>();
+        PythonEngine.Initialize();
+        using (Py.GIL())
+        {
+            dynamic yf = Py.Import("yfinance");
+
+            var historyData = yf.download(symbols, start: "2019-01-02", end: "2019-01-03");
+
+            foreach (var symbol in symbols)
+            {
+                try
+                {
+                    var tickerData = historyData["Open"].get(symbol);
+                    if (tickerData == null) continue;
+
+                    var price = tickerData.loc["2019-01-02"].As<double>();
+
+                    if (!string.IsNullOrEmpty(symbol) && !double.IsNaN(price))
+                    {
+                        prices[symbol] = price;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to process ticker '{symbol}': {ex.Message}");
+                }
+            }
+        }
+
+        return prices;
     }
 }
