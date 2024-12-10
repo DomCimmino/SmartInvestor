@@ -1,4 +1,3 @@
-using Python.Runtime;
 using SmartInvestor.Models;
 
 namespace SmartInvestor.Helpers;

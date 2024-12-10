@@ -63,7 +63,7 @@ public class CompanyService(ICompanyRepository companyRepository, IEdgarReposito
         var financialData = company.CompanyHistoryData?.Facts?.FinancialReportingTaxonomy ?? new FinancialReportingTaxonomy();
         var documentInfo = company.CompanyHistoryData?.Facts?.DocumentAndEntityInformation;
         var earningsPerShareValues = financialData.EarningsPerShare?.Unit?.UsdAndShares
-            ?.Where(x => x is { Form: "10-K", FiscalYear: 2019 or 2018 or 2017, Value: not null })
+            ?.Where(x => x is { Form: Constants.ReferenceForm, FiscalYear: Constants.ReferenceYear or Constants.ReferenceYear - 1 or Constants.ReferenceYear - 2, Value: not null })
             .Select(x => (double?)x.Value)
             .ToList();
         var companyDto = mapper.Map<CompanyDto>(company);
