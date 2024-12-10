@@ -70,7 +70,7 @@ public class EdgarRepository(IHttpClientFactory clientFactory, IMapper mapper) :
 
     public async Task<CompanyFacts?> GetCompanyFacts(string cik)
     {
-        if (_fileCache == null) InitializeFileCache();
+        if (_fileCache == null || _fileCache.Count == 0) InitializeFileCache();
         if (_fileCache == null || !_fileCache.TryGetValue($"CIK{cik}", out var filePath)) return null;
         var content = await File.ReadAllTextAsync(filePath).ConfigureAwait(false);
         return string.IsNullOrEmpty(content) ? null : JsonConvert.DeserializeObject<CompanyFacts>(content);
@@ -80,7 +80,7 @@ public class EdgarRepository(IHttpClientFactory clientFactory, IMapper mapper) :
     {
         if (_extractDataDirectory == null) throw new ArgumentNullException(nameof(_extractDataDirectory));
         _fileCache = Directory.EnumerateFiles(_extractDataDirectory, "CIK*.json")
-            .ToDictionary(Path.GetFileNameWithoutExtension, path => path);
+            .ToDictionary(Path.GetFileNameWithoutExtension , path => path);
     }
 
     private static async Task<string> ReadResponseContentAsync(HttpResponseMessage response)

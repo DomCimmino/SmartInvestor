@@ -1,4 +1,3 @@
-using Python.Runtime;
 using SmartInvestor.Models;
 
 namespace SmartInvestor.Helpers;
@@ -87,40 +86,6 @@ public static class FinancialIndicatorCalculator
     public static double? CurrentRatio(double currentAssets, double currentLiabilities)
     {
         return double.IsNaN(currentAssets / currentLiabilities) ? 0 : currentAssets / currentLiabilities;
-    }
-
-    public static Dictionary<string, double> GetPricesPerShare(List<string?> symbols)
-    {
-        var prices = new Dictionary<string, double>();
-        PythonEngine.Initialize();
-        using (Py.GIL())
-        {
-            dynamic yf = Py.Import("yfinance");
-
-            var historyData = yf.download(symbols, start: "2019-01-02", end: "2019-01-03");
-
-            foreach (var symbol in symbols)
-            {
-                try
-                {
-                    var tickerData = historyData["Open"].get(symbol);
-                    if (tickerData == null) continue;
-
-                    var price = tickerData.loc["2019-01-02"].As<double>();
-
-                    if (!string.IsNullOrEmpty(symbol) && !double.IsNaN(price))
-                    {
-                        prices[symbol] = price;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Failed to process ticker '{symbol}': {ex.Message}");
-                }
-            }
-        }
-
-        return prices;
     }
 
     public static double? PriceEarningsRatio(double pricePerShare, List<double?> earningsPerShare)
